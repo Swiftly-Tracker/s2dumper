@@ -1,0 +1,3 @@
+[submodule "vendor/s2sdk"]
+	path = vendor/s2sdk
+	url = https://github.com/swiftly-solution/s2sdk
