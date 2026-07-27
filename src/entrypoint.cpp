@@ -19,21 +19,24 @@
 #include <stdio.h>
 #include <string_view>
 
-#include "binary/binary.h"
+#include "app/application.h"
+
+Application app;
 
 int main(int argc, char **argv)
 {
-    if (argc < 4)
+    if (argc < 3)
     {
-        printf("Usage: %s <path_to_game> <output_path> <game>\n", argv[0]);
+        printf("Usage: %s <output_path> <game>\n", argv[0]);
         return 1;
     }
 
-    std::string gamePath = argv[1];
-    std::string outputPath = argv[2];
-    std::string game = argv[3];
+    std::string outputPath = argv[1];
+    std::string game = argv[2];
 
-    Binary binary(gamePath, true, "tier0", game);
+    app.Initialize(outputPath, game);
+
+    app.Shutdown();
 
     return 0;
 }

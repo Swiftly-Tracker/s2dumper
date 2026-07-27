@@ -19,11 +19,10 @@
 #include "binary.h"
 #include "../dynlib/dynlib.h"
 
-Binary::Binary(std::string game_path, bool exec_folder, std::string binary_name, std::string game)
+Binary::Binary(bool exec_folder, std::string binary_name, std::string game)
     : m_sBinaryName(binary_name), m_pBinaryHandle(nullptr)
 {
-    std::string binary_path = game_path + (exec_folder ? "/bin" : "/" + game + "/bin") + "/" + WIN_LIN("win64/", "linuxsteamrt64/lib") + binary_name + WIN_LIN(".dll", ".so");
-    m_pBinaryHandle = load_library(binary_path);
+    m_pBinaryHandle = load_library(WIN_LIN("", "lib") + binary_name + WIN_LIN(".dll", ".so"));
     if (m_pBinaryHandle == nullptr)
     {
         printf("[Binary] Failed to load binary: %.*s\n", (int)m_sBinaryName.size(), m_sBinaryName.data());
@@ -46,10 +45,21 @@ void *Binary::GetInterface(const char *interface_name)
     if (m_pBinaryHandle == nullptr)
         return nullptr;
 
-    using CreateInterfaceFn = void *(*)(const char *, int *);
     CreateInterfaceFn create_interface = (CreateInterfaceFn)get_export(m_pBinaryHandle, "CreateInterface");
     if (create_interface == nullptr)
         return nullptr;
 
     return create_interface(interface_name, nullptr);
+}
+
+CreateInterfaceFn Binary::GetFactory()
+{
+    if (m_pBinaryHandle == nullptr)
+        return nullptr;
+
+    CreateInterfaceFn create_interface = (CreateInterfaceFn)get_export(m_pBinaryHandle, "CreateInterface");
+    if (create_interface == nullptr)
+        return nullptr;
+
+    return create_interface;
 }

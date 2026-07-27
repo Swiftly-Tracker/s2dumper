@@ -16,25 +16,32 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  ************************************************************************************************/
 
-#ifndef _src_binary_binary_h
-#define _src_binary_binary_h
+#ifndef _src_app_application_h
+#define _src_app_application_h
 
 #include <string>
+
+#include "../binary/binary.h"
+
+#include "public/schemasystem/schemasystem.h"
+#include "public/eiface.h"
 #include "public/tier0/interface.h"
 
-class Binary
+class Application
 {
 public:
-    Binary(bool exec_folder, std::string binary_name, std::string game);
-    ~Binary();
+    void Initialize(std::string gamePath, std::string game);
+    void Shutdown();
 
-    bool IsValid();
-    void *GetInterface(const char *interface_name);
-    CreateInterfaceFn GetFactory();
+    void *GetCVar();
+    void *GetSchemaSystem();
 
 private:
-    std::string m_sBinaryName;
-    void *m_pBinaryHandle;
+    Binary *tier0;
+    Binary *schema;
+
+    CSchemaSystem *m_pSchemaSystem;
+    ICvar *m_pCVar;
 };
 
 #endif

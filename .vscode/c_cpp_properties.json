@@ -3,7 +3,9 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/vendor/s2sdk/**",
+                "${workspaceFolder}/vendor/**"
             ],
             "defines": [
                 "_DEBUG",
