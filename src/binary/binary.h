@@ -1,6 +1,6 @@
 /************************************************************************************************
  *  S2Dumper is a dumper for various properties of Source2-based games.
- *  Copyright (C) 2026 Swiftly Solution SRL via Sava Andrei-Sebastian and it's contributors
+ *  Copyright (C) 2026 Sava Andrei-Sebastian and it's contributors
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,12 +25,13 @@
 class Binary
 {
 public:
-    Binary(bool exec_folder, std::string binary_name, std::string game);
+    Binary(std::string binary_name);
     ~Binary();
 
     bool IsValid();
     void *GetInterface(const char *interface_name);
     CreateInterfaceFn GetFactory();
+    void *GetExport(const char *export_name);
 
 private:
     std::string m_sBinaryName;

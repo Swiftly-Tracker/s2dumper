@@ -1,6 +1,6 @@
 /************************************************************************************************
  *  S2Dumper is a dumper for various properties of Source2-based games.
- *  Copyright (C) 2026 Swiftly Solution SRL via Sava Andrei-Sebastian and it's contributors
+ *  Copyright (C) 2026 Sava Andrei-Sebastian and it's contributors
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include "binary.h"
 #include "../dynlib/dynlib.h"
 
-Binary::Binary(bool exec_folder, std::string binary_name, std::string game)
+Binary::Binary(std::string binary_name)
     : m_sBinaryName(binary_name), m_pBinaryHandle(nullptr)
 {
     m_pBinaryHandle = load_library(WIN_LIN("", "lib") + binary_name + WIN_LIN(".dll", ".so"));
@@ -62,4 +62,12 @@ CreateInterfaceFn Binary::GetFactory()
         return nullptr;
 
     return create_interface;
+}
+
+void *Binary::GetExport(const char *export_name)
+{
+    if (m_pBinaryHandle == nullptr)
+        return nullptr;
+
+    return get_export(m_pBinaryHandle, export_name);
 }

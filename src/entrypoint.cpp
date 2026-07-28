@@ -1,6 +1,6 @@
 /************************************************************************************************
  *  S2Dumper is a dumper for various properties of Source2-based games.
- *  Copyright (C) 2026 Swiftly Solution SRL via Sava Andrei-Sebastian and it's contributors
+ *  Copyright (C) 2026 Sava Andrei-Sebastian and it's contributors
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
