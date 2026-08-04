@@ -25,7 +25,7 @@
 class Binary
 {
 public:
-    Binary(std::string binary_name);
+    Binary(std::string binary_name, std::string game_name);
     ~Binary();
 
     bool IsValid();

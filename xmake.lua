@@ -18,6 +18,9 @@ target("s2dumper")
 
         sdk_path.."/public/tier1/convar.cpp",
         sdk_path.."/public/tier0/memoverride.cpp",
+
+        "vendor/safetyhook/safetyhook.cpp",
+        "vendor/safetyhook/Zydis.c",
     })
 
     add_includedirs({
@@ -111,7 +114,8 @@ target("s2dumper")
             sdk_path.."/lib/public/win64/tier1.lib",
             sdk_path.."/lib/public/win64/interfaces.lib",
             sdk_path.."/lib/public/win64/2015/libprotobuf.lib",
-            sdk_path.."/lib/public/win64/steam_api64.lib"
+            sdk_path.."/lib/public/win64/steam_api64.lib",
+            "vendor/s2binlib/s2binlib.lib"
         })
     else
         add_links({
@@ -119,7 +123,8 @@ target("s2dumper")
             sdk_path.."/lib/linux64/tier1.a",
             sdk_path.."/lib/linux64/interfaces.a",
             sdk_path.."/lib/linux64/release/libprotobuf.a",
-            sdk_path.."/lib/linux64/libsteam_api.so"
+            sdk_path.."/lib/linux64/libsteam_api.so",
+            "vendor/s2binlib/libs2binlib.a"
         })
     end
 

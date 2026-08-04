@@ -16,35 +16,24 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  ************************************************************************************************/
 
-#include <stdio.h>
-#include <string_view>
+#ifndef _src_hooks_vfunction_h
+#define _src_hooks_vfunction_h
 
-#include "app/application.h"
-#include "dumper/shared.h"
+#include <safetyhook/safetyhook.hpp>
 
-Application app;
-
-int main(int argc, char **argv)
+class VFunctionHook
 {
-    if (argc < 3)
-    {
-        printf("Usage: %s <output_path> <game>\n", argv[0]);
-        return 1;
-    }
+public:
+    void SetHookFunction(void* instance, int index, void* callback, bool is_vtable);
 
-    std::string outputPath = argv[1];
-    std::string game = argv[2];
+    void Enable();
+    void Disable();
 
-    app.Initialize(outputPath, game);
+    void* GetOriginal();
+    bool IsEnabled();
+private:
+    SafetyHookInline m_oHook;
+    void* m_pOriginal = nullptr;
+};
 
-    DumpCommands(outputPath);
-    DumpConVars(outputPath);
-    DumpInterfaces(outputPath);
-    DumpSchema(outputPath);
-
-    printf("%p\n", app.GetGameEntitySystem());
-
-    app.Shutdown();
-
-    return 0;
-}
+#endif

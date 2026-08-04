@@ -16,35 +16,16 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  ************************************************************************************************/
 
-#include <stdio.h>
-#include <string_view>
+#include "jsonc.h"
 
-#include "app/application.h"
-#include "dumper/shared.h"
-
-Application app;
-
-int main(int argc, char **argv)
+void WriteJSON(std::string path, nlohmann::json& j)
 {
-    if (argc < 3)
+    std::string content = j.dump(4);
+
+    auto f = std::fopen(path.c_str(), "w");
+    if(f)
     {
-        printf("Usage: %s <output_path> <game>\n", argv[0]);
-        return 1;
+        fprintf(f, "%s", content.c_str());
+        fclose(f);
     }
-
-    std::string outputPath = argv[1];
-    std::string game = argv[2];
-
-    app.Initialize(outputPath, game);
-
-    DumpCommands(outputPath);
-    DumpConVars(outputPath);
-    DumpInterfaces(outputPath);
-    DumpSchema(outputPath);
-
-    printf("%p\n", app.GetGameEntitySystem());
-
-    app.Shutdown();
-
-    return 0;
 }

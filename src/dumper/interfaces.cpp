@@ -16,35 +16,28 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  ************************************************************************************************/
 
-#include <stdio.h>
-#include <string_view>
+#include "../app/application.h"
+#include "shared.h"
 
-#include "app/application.h"
-#include "dumper/shared.h"
+extern Application app;
 
-Application app;
-
-int main(int argc, char **argv)
+void DumpInterfaces(std::string outputPath)
 {
-    if (argc < 3)
+    auto interfaces = app.GetQueriedInterfaces();
+    
+    std::string output = "";
+    for (const auto& interfaceName : interfaces)
     {
-        printf("Usage: %s <output_path> <game>\n", argv[0]);
-        return 1;
+        if(output != "")
+            output += "\n";
+        output += interfaceName;
     }
-
-    std::string outputPath = argv[1];
-    std::string game = argv[2];
-
-    app.Initialize(outputPath, game);
-
-    DumpCommands(outputPath);
-    DumpConVars(outputPath);
-    DumpInterfaces(outputPath);
-    DumpSchema(outputPath);
-
-    printf("%p\n", app.GetGameEntitySystem());
-
-    app.Shutdown();
-
-    return 0;
+    
+    std::string path = outputPath + "/interfaces.txt";
+    auto f = std::fopen(path.c_str(), "w");
+    if(f)
+    {
+        fprintf(f, "%s", output.c_str());
+        fclose(f);
+    }
 }

@@ -19,10 +19,28 @@
 #include "binary.h"
 #include "../dynlib/dynlib.h"
 
-Binary::Binary(std::string binary_name)
+#include <format>
+#include <set>
+
+static const std::set<std::string> gameSpecificBinaries = {
+    "client",
+    "host",
+    "matchmaking",
+    "server",
+    "modtools"
+};
+
+Binary::Binary(std::string binary_name, std::string game_name)
     : m_sBinaryName(binary_name), m_pBinaryHandle(nullptr)
 {
-    m_pBinaryHandle = load_library(WIN_LIN("", "lib") + binary_name + WIN_LIN(".dll", ".so"));
+    std::string path = "";
+
+    if(gameSpecificBinaries.find(binary_name) != gameSpecificBinaries.end())
+        path = std::format("../../{}/bin/{}/{}{}{}", game_name, WIN_LIN("win64", "linuxsteamrt64"), WIN_LIN("", "lib"), binary_name, WIN_LIN(".dll", ".so"));
+    else
+        path = std::format("{}{}{}", WIN_LIN("", "lib"), binary_name, WIN_LIN(".dll", ".so"));
+
+    m_pBinaryHandle = load_library(path);
     if (m_pBinaryHandle == nullptr)
     {
         printf("[Binary] Failed to load binary: %.*s\n", (int)m_sBinaryName.size(), m_sBinaryName.data());

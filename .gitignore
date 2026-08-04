@@ -7,3 +7,5 @@ build/
 
 
 build.ps1
+schema_install/
+output/

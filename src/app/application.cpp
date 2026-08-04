@@ -17,16 +17,28 @@
  ************************************************************************************************/
 
 #include "application.h"
+#include "../hooks/vfunction.h"
+
+#include <s2binlib/s2binlib.h>
 
 #include <map>
+#include <set>
 
 extern Application app;
 
 std::map<std::string, IAppSystem *> g_mAppSystems;
+std::set<std::string> g_sQueriedInterfaces;
+
+extern std::set<std::string> g_sConvarNames;
+extern std::map<std::string, std::string> g_sConvarModules;
+extern std::set<std::string> g_sCommandNames;
+extern std::map<std::string, std::string> g_sCommandModules;
 
 void *ApplicationCreateInterface(const char *pName, int *pReturnCode)
 {
     std::string iface_name = pName;
+    g_sQueriedInterfaces.insert(iface_name);
+ 
     if (iface_name == CVAR_INTERFACE_VERSION)
     {
         return app.GetCVar();
@@ -57,10 +69,52 @@ void *ApplicationCreateInterface(const char *pName, int *pReturnCode)
     return nullptr;
 }
 
+void SetConVarValue(ICvar* icvar, ConVarRef ref)
+{
+	ConVarRefAbstract cvar(ref);
+	if (!cvar.IsConVarDataValid())
+		return;
+
+	if (!strcmp("r_dopixelvisibility", cvar.GetName()))
+	{
+		cvar.SetBool(false);
+	}
+}
+
+void PopulateConStuff(std::string module_name)
+{
+    ICvar *icvar = (ICvar *)app.GetCVar();
+
+    for (ConVarRefAbstract ref(ConVarRef((uint16)0)); ref.IsValidRef(); ref = ConVarRefAbstract(ConVarRef(ref.GetAccessIndex() + 1)))
+    {
+        std::string name = ref.GetName();
+        if(g_sConvarNames.contains(name))
+            continue;
+
+        g_sConvarNames.insert(name);
+        g_sConvarModules[name] = module_name;
+    }
+
+    ConCommandData* data = icvar->GetConCommandData(ConCommandRef());
+    for (ConCommandRef ref = ConCommandRef((uint16)0); ref.GetRawData() != data; ref = ConCommandRef(ref.GetAccessIndex() + 1))
+    {
+        std::string name = ref.GetName();
+        if(g_sCommandNames.contains(name))
+            continue;
+
+        g_sCommandNames.insert(name);
+        g_sCommandModules[name] = module_name;
+    }
+}
+
+VFunctionHook SetConvarValueHook;
+
 void Application::Initialize(std::string outputPath, std::string game)
 {
-    tier0 = new Binary("tier0");
-    schema = new Binary("schemasystem");
+    tier0 = new Binary("tier0", game);
+    schema = new Binary("schemasystem", game);
+
+    m_szName = game;
 
     void *cvarInterface = tier0->GetInterface(CVAR_INTERFACE_VERSION);
     m_pCVar = static_cast<ICvar *>(cvarInterface);
@@ -69,17 +123,25 @@ void Application::Initialize(std::string outputPath, std::string game)
     m_pCVar->Connect(tier0->GetFactory());
     m_pCVar->Init();
 
+    PopulateConStuff("tier0");
+
     m_pSchemaSystem = static_cast<CSchemaSystem *>(schema->GetInterface(SCHEMASYSTEM_INTERFACE_VERSION));
     m_pSchemaSystem->Connect(&ApplicationCreateInterface);
     m_pSchemaSystem->Init();
+
+    PopulateConStuff("schemasystem");
+
+    s2binlib_initialize("../../..", game.c_str());
+
+    SetConvarValueHook.SetHookFunction(*(void**)m_pCVar, 14, (void*)&SetConVarValue, true);
+    SetConvarValueHook.Enable();
 
     LoadModules();
 }
 
 void Application::Shutdown()
 {
-    delete tier0;
-    delete schema;
+    SetConvarValueHook.Disable();
 }
 
 void *Application::GetCVar()
@@ -97,7 +159,9 @@ void Application::LoadModules()
     for (int i = 0; i < sizeof(s_GameModules) / sizeof(GameModule); i++)
     {
         GameModule &module = s_GameModules[i];
-        Binary *binary = new Binary(module.m_szModuleName);
+        printf("[Application] Loading module: %s\n", module.m_szModuleName);
+
+        Binary *binary = new Binary(module.m_szModuleName, m_szName);
         if (!binary->IsValid())
         {
             printf("[Application] Failed to load module: %s\n", module.m_szModuleName);
@@ -117,12 +181,12 @@ void Application::LoadModules()
         binaryInterface->Connect(&ApplicationCreateInterface);
         if (module.m_bInit)
         {
-            printf("[Application] Initializing module: %s\n", module.m_szModuleName);
             binaryInterface->Init();
+
+            PopulateConStuff(module.m_szModuleName);
         }
         else
         {
-            printf("[Application] Skipping initialization for module: %s\n", module.m_szModuleName);
             typedef void *(*InstallSchemaBindings)(const char *interfaceName, void *pSchemaSystem);
             InstallSchemaBindings installSchemaBindings = reinterpret_cast<InstallSchemaBindings>(binary->GetExport("InstallSchemaBindings"));
             if (installSchemaBindings)
@@ -130,16 +194,14 @@ void Application::LoadModules()
                 installSchemaBindings(SCHEMASYSTEM_INTERFACE_VERSION, m_pSchemaSystem);
             }
         }
-
-        delete binary;
     }
 }
 
 void Application::UnloadModules()
 {
-    for (auto &pair : g_mAppSystems)
+    for(auto it = g_mAppSystems.rbegin(); it != g_mAppSystems.rend(); ++it)
     {
-        IAppSystem *binaryInterface = pair.second;
+        IAppSystem *binaryInterface = it->second;
         if (binaryInterface)
         {
             binaryInterface->Shutdown();
@@ -148,4 +210,17 @@ void Application::UnloadModules()
     }
 
     g_mAppSystems.clear();
+}
+
+std::set<std::string> Application::GetQueriedInterfaces()
+{
+    return g_sQueriedInterfaces;
+}
+
+void* Application::GetGameEntitySystem()
+{
+    Binary engineBin("engine2", m_szName);
+    int returnCode = 0;
+    void* gameResource = engineBin.GetFactory()(GAMERESOURCESERVICESERVER_INTERFACE_VERSION, &returnCode);
+    return *(void**)((uintptr_t)gameResource + WIN_LIN(88,80));
 }

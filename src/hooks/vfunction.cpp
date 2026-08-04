@@ -16,35 +16,40 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  ************************************************************************************************/
 
-#include <stdio.h>
-#include <string_view>
+#include "vfunction.h"
 
-#include "app/application.h"
-#include "dumper/shared.h"
+#include <s2binlib/s2binlib.h>
 
-Application app;
-
-int main(int argc, char **argv)
+void VFunctionHook::SetHookFunction(void* instance, int index, void* callback, bool is_vtable)
 {
-    if (argc < 3)
-    {
-        printf("Usage: %s <output_path> <game>\n", argv[0]);
-        return 1;
-    }
+    if (!instance) return;
 
-    std::string outputPath = argv[1];
-    std::string game = argv[2];
+    void* trampoline_addr = nullptr;
+    s2binlib_install_trampoline(is_vtable ? (void*)((uintptr_t)instance + 8 * index) : ((void*)((uintptr_t)(*(void**)instance) + 8 * index)), &trampoline_addr);
 
-    app.Initialize(outputPath, game);
+    m_oHook = safetyhook::create_inline(trampoline_addr, callback, safetyhook::InlineHook::Flags::StartDisabled);
+}
 
-    DumpCommands(outputPath);
-    DumpConVars(outputPath);
-    DumpInterfaces(outputPath);
-    DumpSchema(outputPath);
+void VFunctionHook::Enable()
+{
+    if (IsEnabled()) return;
 
-    printf("%p\n", app.GetGameEntitySystem());
+    (void)m_oHook.enable(); 
+}
 
-    app.Shutdown();
+void VFunctionHook::Disable()
+{
+    if (!IsEnabled()) return;
 
-    return 0;
+    (void)m_oHook.disable();
+}
+
+void* VFunctionHook::GetOriginal()
+{
+    return (void*)(m_oHook.trampoline().address());
+}
+
+bool VFunctionHook::IsEnabled()
+{
+    return m_oHook.enabled();
 }

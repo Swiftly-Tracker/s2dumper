@@ -16,35 +16,22 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  ************************************************************************************************/
 
-#include <stdio.h>
-#include <string_view>
+#include "string.h"
 
-#include "app/application.h"
-#include "dumper/shared.h"
-
-Application app;
-
-int main(int argc, char **argv)
+std::vector<std::string> explode(std::string s, std::string delimiter)
 {
-    if (argc < 3)
+    if (s.size() == 0) return {};
+    int pos_start = 0, pos_end, delim_len = delimiter.length();
+    std::string token;
+    std::vector<std::string> res;
+
+    while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos)
     {
-        printf("Usage: %s <output_path> <game>\n", argv[0]);
-        return 1;
+        token = s.substr(pos_start, pos_end - pos_start);
+        pos_start = pos_end + delim_len;
+        res.push_back(token);
     }
 
-    std::string outputPath = argv[1];
-    std::string game = argv[2];
-
-    app.Initialize(outputPath, game);
-
-    DumpCommands(outputPath);
-    DumpConVars(outputPath);
-    DumpInterfaces(outputPath);
-    DumpSchema(outputPath);
-
-    printf("%p\n", app.GetGameEntitySystem());
-
-    app.Shutdown();
-
-    return 0;
+    res.push_back(s.substr(pos_start));
+    return res;
 }

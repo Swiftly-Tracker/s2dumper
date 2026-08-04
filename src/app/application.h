@@ -20,6 +20,7 @@
 #define _src_app_application_h
 
 #include <string>
+#include <set>
 #include <vector>
 
 #include "../binary/binary.h"
@@ -83,8 +84,13 @@ public:
 
     void *GetCVar();
     void *GetSchemaSystem();
+    void* GetGameEntitySystem();
+
+    std::set<std::string> GetQueriedInterfaces();
 
 private:
+    std::string m_szName;
+
     Binary *tier0;
     Binary *schema;
 
@@ -93,13 +99,14 @@ private:
 
     std::vector<Binary *> m_vpBinaries;
 
-    GameModule s_GameModules[31] = {
+    GameModule s_GameModules[32] = {
         {"filesystem_stdio", FILESYSTEM_INTERFACE_VERSION},
         {"resourcesystem", RESOURCESYSTEM_INTERFACE_VERSION},
         {"client", "Source2ClientConfig001"},
         {"engine2", SOURCE2ENGINETOSERVER_INTERFACE_VERSION},
         {"host", "GameSystem2HostHook"},
         {"modtools", "Source2ModTools001"},
+        {"matchmaking", MATCHFRAMEWORK_INTERFACE_VERSION},
         {"server", SOURCE2SERVERCONFIG_INTERFACE_VERSION},
         {"animationsystem", ANIMATIONSYSTEM_INTERFACE_VERSION},
         {"materialsystem2", TEXTLAYOUT_INTERFACE_VERSION},
@@ -119,11 +126,11 @@ private:
         {"assetpreview", ASSETPREVIEWSYSTEM_INTERFACE_VERSION, false},
         {"assetbrowser", ASSETBROWSERSYSTEM_INTERFACE_VERSION, false},
         {"resourcecompiler", RESOURCECOMPILERSYSTEM_INTERFACE_VERSION, false},
-        {"tools/hammer", "ToolSystem2_001", false},
-        {"tools/met", "ToolSystem2_001", false},
-        {"tools/pet", "ToolSystem2_001", false},
-        {"tools/cs2_item_editor", "ToolSystem2_001", false},
-        {"tools/workshopmanager", "ToolSystem2_001", false},
+        {"tools/hammer", "ToolSystem2_001"},
+        {"tools/met", "ToolSystem2_001", false },
+	    {"tools/pet", "ToolSystem2_001", false },
+        {"tools/cs2_item_editor", "ToolSystem2_001", false },
+        {"tools/cs2_workshop_manager", "ToolSystem2_001", false },
         {"tools/modeldoc_editor", "ToolSystem2_ModelDoc", false},
     };
 };
