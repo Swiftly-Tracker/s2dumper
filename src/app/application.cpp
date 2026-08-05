@@ -24,6 +24,12 @@
 #include <map>
 #include <set>
 
+#include "public/tier1/utldict.h"
+#include "public/entity2/entityclass.h"
+
+#define CS2_INIT_CODEGEN "48 89 5C 24 ? 57 48 83 EC ? 48 8B 1D ? ? ? ? 8B F9"
+#define CS2_GET_CODEGEN "48 8D 05 ? ? ? ? C3 ? ? ? ? ? ? ? ? 45 8B C8"
+
 extern Application app;
 
 std::map<std::string, IAppSystem *> g_mAppSystems;
@@ -131,7 +137,7 @@ void Application::Initialize(std::string outputPath, std::string game)
 
     PopulateConStuff("schemasystem");
 
-    s2binlib_initialize("../../..", game.c_str());
+    s2binlib_initialize("../..", game.c_str());
 
     SetConvarValueHook.SetHookFunction(*(void**)m_pCVar, 14, (void*)&SetConVarValue, true);
     SetConvarValueHook.Enable();
@@ -178,6 +184,22 @@ void Application::LoadModules()
         }
         g_mAppSystems[module.m_szInterfaceName] = binaryInterface;
 
+        if(std::string(module.m_szModuleName) == "server")
+        {
+            if(m_szName == "csgo")
+            {
+                void* initFunc = nullptr;
+                s2binlib_pattern_scan("server", CS2_INIT_CODEGEN, &initFunc);
+                printf("%p\n", initFunc);
+                reinterpret_cast<void(*)(int)>(initFunc)(0);
+
+                void* getFunc = nullptr;
+                s2binlib_pattern_scan("server", CS2_GET_CODEGEN, &getFunc);
+                CNetworkSerializerCodeGenDatabase* db = reinterpret_cast<CNetworkSerializerCodeGenDatabase*(*)()>(getFunc)();
+                printf("%d\n", db->m_ClassInfos.Count());
+            }
+        }
+
         binaryInterface->Connect(&ApplicationCreateInterface);
         if (module.m_bInit)
         {
@@ -215,12 +237,4 @@ void Application::UnloadModules()
 std::set<std::string> Application::GetQueriedInterfaces()
 {
     return g_sQueriedInterfaces;
-}
-
-void* Application::GetGameEntitySystem()
-{
-    Binary engineBin("engine2", m_szName);
-    int returnCode = 0;
-    void* gameResource = engineBin.GetFactory()(GAMERESOURCESERVICESERVER_INTERFACE_VERSION, &returnCode);
-    return *(void**)((uintptr_t)gameResource + WIN_LIN(88,80));
 }

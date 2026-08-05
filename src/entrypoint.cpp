@@ -42,8 +42,6 @@ int main(int argc, char **argv)
     DumpInterfaces(outputPath);
     DumpSchema(outputPath);
 
-    printf("%p\n", app.GetGameEntitySystem());
-
     app.Shutdown();
 
     return 0;
