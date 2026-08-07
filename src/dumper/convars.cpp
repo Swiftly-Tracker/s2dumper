@@ -27,8 +27,6 @@ std::map<std::string, std::string> g_sConvarModules;
 
 void DumpConVars(std::string outputPath)
 {
-    ICvar *icvar = (ICvar *)app.GetCVar();
-
     nlohmann::json convars;
 
     for (ConVarRefAbstract ref(ConVarRef((uint16)0)); ref.IsValidRef(); ref = ConVarRefAbstract(ConVarRef(ref.GetAccessIndex() + 1)))
@@ -67,6 +65,8 @@ void DumpConVars(std::string outputPath)
     [](const nlohmann::json& a, const nlohmann::json& b) {
         return a["name"].get<std::string>() < b["name"].get<std::string>();
     });
+
+    printf("Dumped %zu convars\n", convars.size());
 
     WriteJSON(outputPath + "/convars.json", convars);
 }

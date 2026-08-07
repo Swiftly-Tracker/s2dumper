@@ -27,11 +27,9 @@ extern Application app;
 
 void DumpCommands(std::string outputPath)
 {
-    auto cvar = (ICvar*)app.GetCVar();
-
     nlohmann::json commands;
 
-    ConCommandData* data = cvar->GetConCommandData(ConCommandRef());
+    ConCommandData* data = g_pCVar->GetConCommandData(ConCommandRef());
     for (ConCommandRef ref = ConCommandRef((uint16)0); ref.GetRawData() != data; ref = ConCommandRef(ref.GetAccessIndex() + 1))
     {
         commands.push_back({
@@ -45,6 +43,8 @@ void DumpCommands(std::string outputPath)
             {"module", g_sCommandModules[ref.GetName()]},
         });
     }
+
+    printf("Dumped %zu commands\n", commands.size());
 
     WriteJSON(outputPath + "/commands.json", commands);
 }

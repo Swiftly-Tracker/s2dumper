@@ -20,9 +20,15 @@
 
  #include <map>
  #include <public/icvar.h>
+ #include <set>
 
 #define FCVAR_MISSING1	(1ull<<30)
 #define FCVAR_MISSING2	(1ull<<31)
+
+extern std::set<std::string> g_sConvarNames;
+extern std::map<std::string, std::string> g_sConvarModules;
+extern std::set<std::string> g_sCommandNames;
+extern std::map<std::string, std::string> g_sCommandModules;
 
 std::map<uint64_t, std::string> g_mFlags = {
     {FCVAR_LINKED_CONCOMMAND, "linked_concommand"},
@@ -69,4 +75,28 @@ std::vector<std::string> ParseFlags(uint64_t flags)
             result.push_back(name);
 
     return result;
+}
+
+void PopulateConStuff(std::string module_name)
+{
+    for (ConVarRefAbstract ref(ConVarRef((uint16)0)); ref.IsValidRef(); ref = ConVarRefAbstract(ConVarRef(ref.GetAccessIndex() + 1)))
+    {
+        std::string name = ref.GetName();
+        if(g_sConvarNames.contains(name))
+            continue;
+
+        g_sConvarNames.insert(name);
+        g_sConvarModules[name] = module_name;
+    }
+
+    ConCommandData* data = g_pCVar->GetConCommandData(ConCommandRef());
+    for (ConCommandRef ref = ConCommandRef((uint16)0); ref.GetRawData() != data; ref = ConCommandRef(ref.GetAccessIndex() + 1))
+    {
+        std::string name = ref.GetName();
+        if(g_sCommandNames.contains(name))
+            continue;
+
+        g_sCommandNames.insert(name);
+        g_sCommandModules[name] = module_name;
+    }
 }

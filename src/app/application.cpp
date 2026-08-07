@@ -23,56 +23,87 @@
 
 #include <map>
 #include <set>
+#include <filesystem>
 
 #include "public/tier1/utldict.h"
 #include "public/entity2/entityclass.h"
+#include "../dumper/shared.h"
 
-#define CS2_INIT_CODEGEN "48 89 5C 24 ? 57 48 83 EC ? 48 8B 1D ? ? ? ? 8B F9"
-#define CS2_GET_CODEGEN "48 8D 05 ? ? ? ? C3 ? ? ? ? ? ? ? ? 45 8B C8"
+typedef uint8_t(*InstallSchemaBindingsFn)(const char*, void*);
 
-extern Application app;
+std::map<std::string, IAppSystem*> g_mInitializedInterfaces;
 
-std::map<std::string, IAppSystem *> g_mAppSystems;
-std::set<std::string> g_sQueriedInterfaces;
-
-extern std::set<std::string> g_sConvarNames;
-extern std::map<std::string, std::string> g_sConvarModules;
-extern std::set<std::string> g_sCommandNames;
-extern std::map<std::string, std::string> g_sCommandModules;
-
-void *ApplicationCreateInterface(const char *pName, int *pReturnCode)
+struct InitGameModule
 {
-    std::string iface_name = pName;
-    g_sQueriedInterfaces.insert(iface_name);
- 
-    if (iface_name == CVAR_INTERFACE_VERSION)
-    {
-        return app.GetCVar();
+    const char *m_szModuleName;
+    const char *m_szInterfaceName;
+    bool m_bInit = true;
+};
+
+static const InitGameModule gs_GameModules[28] = {
+    {"filesystem_stdio", FILESYSTEM_INTERFACE_VERSION},
+    {"resourcesystem", RESOURCESYSTEM_INTERFACE_VERSION},
+    {"client", "Source2ClientConfig001"},
+    {"engine2", SOURCE2ENGINETOSERVER_INTERFACE_VERSION},
+    {"host", "GameSystem2HostHook"},
+    {"modtools", "Source2ModTools001"},
+    {"matchmaking", MATCHFRAMEWORK_INTERFACE_VERSION},
+    {"server", SOURCE2SERVERCONFIG_INTERFACE_VERSION},
+    {"animationsystem", ANIMATIONSYSTEM_INTERFACE_VERSION},
+    {"materialsystem2", TEXTLAYOUT_INTERFACE_VERSION},
+    {"meshsystem", MESHSYSTEM_INTERFACE_VERSION, false},
+    {"networksystem", NETWORKSYSTEM_INTERFACE_VERSION, false},
+    {"panorama", PANORAMAUIENGINE_INTERFACE_VERSION},
+    {"particles", PARTICLESYSTEMMGR_INTERFACE_VERSION, false},
+    {"pulse_system", PULSESYSTEM_INTERFACE_VERSION},
+    {WIN_LIN("rendersystemdx11", "rendersystemvulkan"), RENDER_UTILS_INTERFACE_VERSION},
+    {"scenefilecache", "SceneFileCache002"},
+    {"scenesystem", SCENEUTILS_INTERFACE_VERSION},
+    {"soundsystem", SOUNDOPSYSTEMEDIT_INTERFACE_VERSION},
+    {"steamaudio", STEAMAUDIO_INTERFACE_VERSION, false},
+    {"vphysics2", VPHYSICS2_INTERFACE_VERSION},
+    {"worldrenderer", WORLD_RENDERER_MGR_INTERFACE_VERSION},
+    {"assetsystem", ASSETSYSTEM_INTERFACE_VERSION, false},
+    {"assetpreview", ASSETPREVIEWSYSTEM_INTERFACE_VERSION, false},
+    {"assetbrowser", ASSETBROWSERSYSTEM_INTERFACE_VERSION, false},
+    {"resourcecompiler", RESOURCECOMPILERSYSTEM_INTERFACE_VERSION, false},
+    {"hammer", "ToolSystem2_001"},
+    {"modeldoc_editor", "ToolSystem2_ModelDoc", false},
+};
+
+void* RawFactory(const char* name, int* returnCode)
+{
+    InterfaceQueried(name);
+    auto module = app.FindModuleIFace(name);
+    if(!module) module = &app;
+    if(returnCode) *returnCode = 0;
+
+    return module;
+}
+
+void* FullFactory(const char* name, int* returnCode)
+{
+    InterfaceQueried(name);
+  
+    std::string ifaceName = name;
+    void* returnIface = nullptr;
+    if(ifaceName == CVAR_INTERFACE_VERSION) {
+        returnIface = g_pCVar;
+    } else if(ifaceName == SCHEMASYSTEM_INTERFACE_VERSION) {
+        returnIface = g_pSchemaSystem;
+    } else if(ifaceName == APPLICATION_INTERFACE_VERSION) {
+        returnIface = &app;
+    } else {
+        if(g_mInitializedInterfaces.contains(ifaceName)) {
+            returnIface = g_mInitializedInterfaces[ifaceName];
+        }
     }
 
-    if (iface_name == SCHEMASYSTEM_INTERFACE_VERSION)
-    {
-        return app.GetSchemaSystem();
+    if(returnCode) {
+        *returnCode = returnIface != nullptr ? 0 : 1;
     }
 
-    if (iface_name == APPLICATION_INTERFACE_VERSION)
-    {
-        return &app;
-    }
-
-    auto it = g_mAppSystems.find(iface_name);
-    if (it != g_mAppSystems.end())
-    {
-        if (pReturnCode)
-            *pReturnCode = 0;
-
-        return it->second;
-    }
-
-    if (pReturnCode)
-        *pReturnCode = 1;
-
-    return nullptr;
+    return returnIface;
 }
 
 void SetConVarValue(ICvar* icvar, ConVarRef ref)
@@ -87,138 +118,188 @@ void SetConVarValue(ICvar* icvar, ConVarRef ref)
 	}
 }
 
-void PopulateConStuff(std::string module_name)
-{
-    ICvar *icvar = (ICvar *)app.GetCVar();
-
-    for (ConVarRefAbstract ref(ConVarRef((uint16)0)); ref.IsValidRef(); ref = ConVarRefAbstract(ConVarRef(ref.GetAccessIndex() + 1)))
-    {
-        std::string name = ref.GetName();
-        if(g_sConvarNames.contains(name))
-            continue;
-
-        g_sConvarNames.insert(name);
-        g_sConvarModules[name] = module_name;
-    }
-
-    ConCommandData* data = icvar->GetConCommandData(ConCommandRef());
-    for (ConCommandRef ref = ConCommandRef((uint16)0); ref.GetRawData() != data; ref = ConCommandRef(ref.GetAccessIndex() + 1))
-    {
-        std::string name = ref.GetName();
-        if(g_sCommandNames.contains(name))
-            continue;
-
-        g_sCommandNames.insert(name);
-        g_sCommandModules[name] = module_name;
-    }
-}
-
 VFunctionHook SetConvarValueHook;
 
 void Application::Initialize(std::string outputPath, std::string game)
 {
-    tier0 = new Binary("tier0", game);
-    schema = new Binary("schemasystem", game);
-
     m_szName = game;
+    s2binlib_initialize("../..", game.c_str());
 
-    void *cvarInterface = tier0->GetInterface(CVAR_INTERFACE_VERSION);
-    m_pCVar = static_cast<ICvar *>(cvarInterface);
-    g_pCVar = m_pCVar;
+    LoadModules();
 
-    m_pCVar->Connect(tier0->GetFactory());
-    m_pCVar->Init();
+    auto tier0It = m_mModules.find("tier0");
+    if(tier0It == m_mModules.end())
+        return;
+
+    auto tier0Factory = tier0It->second->m_pCreateInterface;
+
+    g_pCVar = (ICvar*)(tier0Factory(CVAR_INTERFACE_VERSION, nullptr));
+    g_pCVar->Connect(tier0Factory);
+    g_pCVar->Init();
+
+    SetConvarValueHook.SetHookFunction(*(void**)g_pCVar, 14, (void*)&SetConVarValue, true);
+    SetConvarValueHook.Enable();
 
     PopulateConStuff("tier0");
 
-    m_pSchemaSystem = static_cast<CSchemaSystem *>(schema->GetInterface(SCHEMASYSTEM_INTERFACE_VERSION));
-    m_pSchemaSystem->Connect(&ApplicationCreateInterface);
-    m_pSchemaSystem->Init();
+    auto schemaSystem = GetSchemaSystem();
+    g_pSchemaSystem = schemaSystem;
+    schemaSystem->PrintSchemaStats("");
 
     PopulateConStuff("schemasystem");
 
-    s2binlib_initialize("../..", game.c_str());
-
-    SetConvarValueHook.SetHookFunction(*(void**)m_pCVar, 14, (void*)&SetConVarValue, true);
-    SetConvarValueHook.Enable();
-
-    LoadModules();
+    (void)GetCodeGenDatabase();
 }
 
 void Application::Shutdown()
 {
-    SetConvarValueHook.Disable();
 }
 
-void *Application::GetCVar()
+std::vector<std::string> FetchFileNamesFromDirectory(const std::string& directoryPath)
 {
-    return m_pCVar;
+    std::vector<std::string> fileNames;
+    for (const auto& entry : std::filesystem::directory_iterator(directoryPath))
+    {
+        if (entry.is_directory())
+        {
+            std::vector<std::string> fls = FetchFileNamesFromDirectory(entry.path().string());
+            for (auto fl : fls) fileNames.push_back(fl);
+        } else {
+            fileNames.push_back(std::filesystem::absolute(entry.path()).string());
+        }
+    }
+    return fileNames;
 }
 
-void *Application::GetSchemaSystem()
-{
-    return m_pSchemaSystem;
+std::string NormalizeModuleName(std::string filename) {
+	if (auto dot = filename.find('.'); dot != std::string::npos)
+		filename = filename.substr(0, dot);
+
+	if (filename.find("lib") == 0)
+		filename = filename.substr(3);
+	
+    return filename;
 }
 
 void Application::LoadModules()
 {
-    for (int i = 0; i < sizeof(s_GameModules) / sizeof(GameModule); i++)
+    std::vector<std::string> files = FetchFileNamesFromDirectory("../../..");
+    for (auto file : files)
     {
-        GameModule &module = s_GameModules[i];
-        printf("[Application] Loading module: %s\n", module.m_szModuleName);
-
-        Binary *binary = new Binary(module.m_szModuleName, m_szName);
-        if (!binary->IsValid())
+        if (file.find(".dll") != std::string::npos && file.find(".dll.") == std::string::npos)
         {
-            printf("[Application] Failed to load module: %s\n", module.m_szModuleName);
-            delete binary;
-            continue;
+            auto moduleName = NormalizeModuleName(std::filesystem::path(file).filename().string());
+            if(m_mModules.contains(moduleName))
+                continue;
+
+            if(moduleName == "met" || moduleName == "pet" || moduleName == "cs2_item_editor" || moduleName == "cs2_workshop_manager") continue;
+
+            Binary* binary = new Binary(file);
+            auto factory = binary->GetFactory();
+
+            GameModule* module = new GameModule();
+            module->m_pBinary = binary;
+            module->m_pCreateInterface = factory;
+            module->m_szPath = file;
+
+            m_mModules[moduleName] = module;
         }
+    }
+}
 
-        IAppSystem *binaryInterface = static_cast<IAppSystem *>(binary->GetInterface(module.m_szInterfaceName));
-        if (!binaryInterface)
-        {
-            printf("[Application] Failed to get interface: %s from module: %s\n", module.m_szInterfaceName, module.m_szModuleName);
-            delete binary;
-            continue;
-        }
-        g_mAppSystems[module.m_szInterfaceName] = binaryInterface;
+bool g_bSchemaBindingsInstalled = false;
 
-        binaryInterface->Connect(&ApplicationCreateInterface);
-        if (module.m_bInit)
-        {
-            binaryInterface->Init();
+CSchemaSystem* Application::GetSchemaSystem()
+{
+    auto module = m_mModules.find("schemasystem");
+    if (module == m_mModules.end())
+        return nullptr;
 
-            PopulateConStuff(module.m_szModuleName);
-        }
-        else
+    static auto schemaSystem = (CSchemaSystem*)(module->second->m_pCreateInterface(SCHEMASYSTEM_INTERFACE_VERSION, nullptr));
+    if(!schemaSystem) return nullptr;
+
+    if(!g_bSchemaBindingsInstalled)
+    {
+        g_bSchemaBindingsInstalled = true;
+        for(auto& [name, mod] : m_mModules)
         {
-            typedef void *(*InstallSchemaBindings)(const char *interfaceName, void *pSchemaSystem);
-            InstallSchemaBindings installSchemaBindings = reinterpret_cast<InstallSchemaBindings>(binary->GetExport("InstallSchemaBindings"));
-            if (installSchemaBindings)
+            auto installBindings = (InstallSchemaBindingsFn)(mod->m_pBinary->GetExport("InstallSchemaBindings"));
+            if(installBindings)
             {
-                installSchemaBindings(SCHEMASYSTEM_INTERFACE_VERSION, m_pSchemaSystem);
+                printf("Installing schema bindings for module: %s\n", name.c_str());
+                installBindings(SCHEMASYSTEM_INTERFACE_VERSION, schemaSystem);
             }
         }
     }
+
+    return schemaSystem;
 }
 
-void Application::UnloadModules()
+CNetworkSerializerCodeGenDatabase* Application::GetCodeGenDatabase()
 {
-    for(auto it = g_mAppSystems.rbegin(); it != g_mAppSystems.rend(); ++it)
+    static CNetworkSerializerCodeGenDatabase* codeGenDatabase = nullptr;
+    if(codeGenDatabase) return codeGenDatabase;
+
+    auto iServer = m_mModules.find("server");
+    auto iTier0 = m_mModules.find("tier0");
+    if (iServer == m_mModules.end() || iTier0 == m_mModules.end())
+        return nullptr;
+
+    auto serverFactory = iServer->second->m_pCreateInterface;
+    auto tier0Factory = iTier0->second->m_pCreateInterface;
+
+    IAppSystem* serverIface = (IAppSystem*)serverFactory(SOURCE2SERVER_INTERFACE_VERSION, nullptr);
+    if(serverIface)
     {
-        IAppSystem *binaryInterface = it->second;
-        if (binaryInterface)
-        {
-            binaryInterface->Shutdown();
-            binaryInterface->Disconnect();
-        }
+        InitModule("server", serverIface, SOURCE2SERVER_INTERFACE_VERSION, RawFactory, false);
+
+        void* CBaseEntityVTable = nullptr;
+        s2binlib_find_vtable("server", "CBaseEntity", &CBaseEntityVTable);
+
+        CNetworkSerializerClassInfo* classInfo = reinterpret_cast<CNetworkSerializerClassInfo*(*)()>(((void**)CBaseEntityVTable)[0])();
+        codeGenDatabase = classInfo->m_pDatabase;
     }
 
-    g_mAppSystems.clear();
+    if(g_pSchemaSystem)
+    {
+        InitModule("schemasystem", g_pSchemaSystem, SCHEMASYSTEM_INTERFACE_VERSION, FullFactory, true);
+    }
+
+    for(int i = 0; i < sizeof(gs_GameModules) / sizeof(gs_GameModules[0]); i++)
+    {
+        auto& module = gs_GameModules[i];
+        IAppSystem* appSystem = (IAppSystem*)FindModuleIFace(module.m_szInterfaceName);
+        if(!appSystem) continue;
+
+        g_mInitializedInterfaces[module.m_szInterfaceName] = appSystem;
+        InitModule(module.m_szModuleName, appSystem, module.m_szInterfaceName, FullFactory, module.m_bInit);
+        
+        PopulateConStuff(module.m_szModuleName);
+    }
+
+    return codeGenDatabase;
 }
 
-std::set<std::string> Application::GetQueriedInterfaces()
+void* Application::FindModuleIFace(const char* name)
 {
-    return g_sQueriedInterfaces;
+    int rc = 0;
+    for(auto& [modName, mod] : m_mModules)
+    {
+        if(mod->m_pCreateInterface)
+        {
+            void* iface = mod->m_pCreateInterface(name, &rc);
+            if(iface) return iface;
+        }
+    }
+    return nullptr;
+}
+
+void Application::InitModule(std::string name, IAppSystem* system, const char* interfaceName, CreateIFace factory, bool shouldInit)
+{
+    system->Connect(factory);
+    if(shouldInit) {
+        system->Init();
+    }
+
+    m_mInitializedModules[name] = system;
 }

@@ -27,5 +27,7 @@ void DumpCommands(std::string outputPath);
 void DumpConVars(std::string outputPath);
 void DumpSchema(std::string outputPath);
 void DumpInterfaces(std::string outputPath);
+void PopulateConStuff(std::string module_name);
+void InterfaceQueried(std::string interfaceName);
 
 #endif

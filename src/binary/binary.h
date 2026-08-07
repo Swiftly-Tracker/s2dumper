@@ -20,17 +20,18 @@
 #define _src_binary_binary_h
 
 #include <string>
-#include "public/tier0/interface.h"
+
+typedef void *(*CreateIFace)(const char *pName, int *pReturnCode);
 
 class Binary
 {
 public:
-    Binary(std::string binary_name, std::string game_name);
+    Binary(std::string binary_name);
     ~Binary();
 
     bool IsValid();
     void *GetInterface(const char *interface_name);
-    CreateInterfaceFn GetFactory();
+    CreateIFace GetFactory();
     void *GetExport(const char *export_name);
 
 private:

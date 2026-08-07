@@ -25,6 +25,8 @@
 
 extern Application app;
 
+std::set<uint64_t> g_sNetworkedFields;
+
 bool IsStandardLayoutClass(SchemaClassInfoData_t* classData) {
     {
         auto pClass = classData;
@@ -213,7 +215,7 @@ void ReadClasses(CSchemaType_DeclaredClass* declClass, nlohmann::json& outJson)
         nlohmann::json fieldObject = {
             {"name", field.m_pszName},
             {"name_hash", fieldHash},
-            {"networked", false},
+            {"networked", g_sNetworkedFields.contains(fieldHash)},
             {"offset", field.m_nSingleInheritanceOffset},
             {"size", size},
             {"alignment", alignment},
@@ -337,6 +339,24 @@ void ReadEnums(CSchemaType_DeclaredEnum* declClass, nlohmann::json& outJson)
 
 void DumpSchema(std::string outputPath)
 {
+    auto codegenDatabase = app.GetCodeGenDatabase();
+
+    uint32_t classHash = 0;
+    uint64_t fieldHash = 0;
+
+    FOR_EACH_MAP_FAST(codegenDatabase->m_ClassInfos, i)
+    {
+        auto className = codegenDatabase->m_ClassInfos.Key(i);
+        auto classInfo = codegenDatabase->m_ClassInfos[i];
+        classHash = hash_32_fnv1a_const(className);
+        FOR_EACH_VEC(classInfo->m_Fields, j)
+        {
+            auto fieldInfo = classInfo->m_Fields[j];
+            fieldHash = ((uint64_t)(classHash) << 32 | hash_32_fnv1a_const(fieldInfo->m_pszFieldName.Get()));
+            g_sNetworkedFields.insert(fieldHash);
+        }
+    }
+
     CSchemaSystem* schemaSystem = (CSchemaSystem*)app.GetSchemaSystem();
 
     nlohmann::json sdkJson;

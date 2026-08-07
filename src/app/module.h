@@ -16,42 +16,16 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  ************************************************************************************************/
 
-#include "dynlib.h"
+#ifndef _src_app_module_h
+#define _src_app_module_h
 
-#ifdef _WIN32
-void *load_library(std::string_view path)
-{
-    HMODULE h = ::LoadLibraryExA(path.data(), nullptr, 0x8);
-    return (void *)h;
-}
+#include "../binary/binary.h"
 
-void *get_export(void *h, std::string_view name)
+struct GameModule
 {
-    void *f = ::GetProcAddress((HMODULE)h, name.data());
-    return f;
-}
+    Binary* m_pBinary;
+    CreateIFace m_pCreateInterface;
+    std::string m_szPath;
+};
 
-void unload_library(void *lib)
-{
-    if (!lib)
-        return;
-    ::FreeLibrary((HMODULE)lib);
-}
-#else
-void *load_library(std::string_view path)
-{
-    void *h = dlopen(path.data(), RTLD_LAZY | RTLD_LOCAL);
-    return h;
-}
-void *get_export(void *h, std::string_view name)
-{
-    void *f = dlsym(h, name.data());
-    return f;
-}
-void unload_library(void *lib)
-{
-    if (!lib)
-        return;
-    dlclose(lib);
-}
 #endif

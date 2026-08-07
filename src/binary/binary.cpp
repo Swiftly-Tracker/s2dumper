@@ -22,25 +22,10 @@
 #include <format>
 #include <set>
 
-static const std::set<std::string> gameSpecificBinaries = {
-    "client",
-    "host",
-    "matchmaking",
-    "server",
-    "modtools"
-};
-
-Binary::Binary(std::string binary_name, std::string game_name)
+Binary::Binary(std::string binary_name)
     : m_sBinaryName(binary_name), m_pBinaryHandle(nullptr)
 {
-    std::string path = "";
-
-    if(gameSpecificBinaries.find(binary_name) != gameSpecificBinaries.end())
-        path = std::format("../../{}/bin/{}/{}{}{}", game_name, WIN_LIN("win64", "linuxsteamrt64"), WIN_LIN("", "lib"), binary_name, WIN_LIN(".dll", ".so"));
-    else
-        path = std::format("{}{}{}", WIN_LIN("", "lib"), binary_name, WIN_LIN(".dll", ".so"));
-
-    m_pBinaryHandle = load_library(path);
+    m_pBinaryHandle = load_library(binary_name);
     if (m_pBinaryHandle == nullptr)
     {
         printf("[Binary] Failed to load binary: %.*s\n", (int)m_sBinaryName.size(), m_sBinaryName.data());
@@ -63,19 +48,19 @@ void *Binary::GetInterface(const char *interface_name)
     if (m_pBinaryHandle == nullptr)
         return nullptr;
 
-    CreateInterfaceFn create_interface = (CreateInterfaceFn)get_export(m_pBinaryHandle, "CreateInterface");
+    CreateIFace create_interface = (CreateIFace)get_export(m_pBinaryHandle, "CreateInterface");
     if (create_interface == nullptr)
         return nullptr;
 
     return create_interface(interface_name, nullptr);
 }
 
-CreateInterfaceFn Binary::GetFactory()
+CreateIFace Binary::GetFactory()
 {
     if (m_pBinaryHandle == nullptr)
         return nullptr;
 
-    CreateInterfaceFn create_interface = (CreateInterfaceFn)get_export(m_pBinaryHandle, "CreateInterface");
+    CreateIFace create_interface = (CreateIFace)get_export(m_pBinaryHandle, "CreateInterface");
     if (create_interface == nullptr)
         return nullptr;
 

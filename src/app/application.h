@@ -21,21 +21,16 @@
 
 #include <string>
 #include <set>
-#include <vector>
+#include <map>
 
 #include "../binary/binary.h"
 #include "../dynlib/dynlib.h"
+#include "module.h"
 
 #include "public/schemasystem/schemasystem.h"
+#include "public/entity2/entityclass.h"
 #include "public/eiface.h"
 #include "public/tier0/interface.h"
-
-struct GameModule
-{
-    const char *m_szModuleName;
-    const char *m_szInterfaceName;
-    bool m_bInit = true;
-};
 
 class Application : public CTier0AppSystem<IAppSystem>
 {
@@ -46,7 +41,7 @@ public:
 #endif
     virtual void PreShutdown() {};
     virtual BuildType_t GetBuildType() { return kBuildTypeRelease; };
-    virtual void Reconnect(CreateInterfaceFn factory, const char *interfaceName) {};
+    virtual void Reconnect(CreateIFace factory, const char *interfaceName) {};
 
     virtual int AddSystem(IAppSystem *pAppSystem, const char *interfaceName, bool errorOut) { return 0; };
     virtual int AddSystem(const char *unk, const char *interfaceName, bool errorOut) { return 0; };
@@ -80,59 +75,20 @@ public:
     void Shutdown();
 
     void LoadModules();
-    void UnloadModules();
+    CSchemaSystem* GetSchemaSystem();
+    CNetworkSerializerCodeGenDatabase* GetCodeGenDatabase();
 
-    void *GetCVar();
-    void *GetSchemaSystem();
-    void* GetGameEntitySystem();
-
-    std::set<std::string> GetQueriedInterfaces();
+    void* FindModuleIFace(const char* name);
+    void InitModule(std::string name, IAppSystem* system, const char* interfaceName, CreateIFace factory, bool shouldInit = true);
 
 private:
     std::string m_szName;
-
-    Binary *tier0;
-    Binary *schema;
-
-    CSchemaSystem *m_pSchemaSystem;
-    ICvar *m_pCVar;
-
-    std::vector<Binary *> m_vpBinaries;
-
-    GameModule s_GameModules[32] = {
-        {"filesystem_stdio", FILESYSTEM_INTERFACE_VERSION},
-        {"resourcesystem", RESOURCESYSTEM_INTERFACE_VERSION},
-        {"client", "Source2ClientConfig001"},
-        {"engine2", SOURCE2ENGINETOSERVER_INTERFACE_VERSION},
-        {"host", "GameSystem2HostHook"},
-        {"modtools", "Source2ModTools001"},
-        {"matchmaking", MATCHFRAMEWORK_INTERFACE_VERSION},
-        {"server", SOURCE2SERVERCONFIG_INTERFACE_VERSION},
-        {"animationsystem", ANIMATIONSYSTEM_INTERFACE_VERSION},
-        {"materialsystem2", TEXTLAYOUT_INTERFACE_VERSION},
-        {"meshsystem", MESHSYSTEM_INTERFACE_VERSION, false},
-        {"networksystem", NETWORKSYSTEM_INTERFACE_VERSION, false},
-        {"panorama", PANORAMAUIENGINE_INTERFACE_VERSION},
-        {"particles", PARTICLESYSTEMMGR_INTERFACE_VERSION, false},
-        {"pulse_system", PULSESYSTEM_INTERFACE_VERSION},
-        {WIN_LIN("rendersystemdx11", "rendersystemvulkan"), RENDER_UTILS_INTERFACE_VERSION},
-        {"scenefilecache", "SceneFileCache002"},
-        {"scenesystem", SCENEUTILS_INTERFACE_VERSION},
-        {"soundsystem", SOUNDOPSYSTEMEDIT_INTERFACE_VERSION},
-        {"steamaudio", STEAMAUDIO_INTERFACE_VERSION, false},
-        {"vphysics2", VPHYSICS2_INTERFACE_VERSION},
-        {"worldrenderer", WORLD_RENDERER_MGR_INTERFACE_VERSION},
-        {"assetsystem", ASSETSYSTEM_INTERFACE_VERSION, false},
-        {"assetpreview", ASSETPREVIEWSYSTEM_INTERFACE_VERSION, false},
-        {"assetbrowser", ASSETBROWSERSYSTEM_INTERFACE_VERSION, false},
-        {"resourcecompiler", RESOURCECOMPILERSYSTEM_INTERFACE_VERSION, false},
-        {"tools/hammer", "ToolSystem2_001"},
-        {"tools/met", "ToolSystem2_001", false },
-	    {"tools/pet", "ToolSystem2_001", false },
-        {"tools/cs2_item_editor", "ToolSystem2_001", false },
-        {"tools/cs2_workshop_manager", "ToolSystem2_001", false },
-        {"tools/modeldoc_editor", "ToolSystem2_ModelDoc", false},
-    };
+    std::map<std::string, GameModule*> m_mModules;
+    std::map<std::string, IAppSystem*> m_mInitializedModules;
 };
+
+extern Application app;
+
+void PopulateConStuff(std::string module_name);
 
 #endif

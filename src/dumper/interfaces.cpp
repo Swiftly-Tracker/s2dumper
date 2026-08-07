@@ -21,12 +21,17 @@
 
 extern Application app;
 
+std::set<std::string> g_sQueriedInterfaces;
+
+void InterfaceQueried(std::string interfaceName)
+{
+    g_sQueriedInterfaces.insert(interfaceName);
+}
+
 void DumpInterfaces(std::string outputPath)
 {
-    auto interfaces = app.GetQueriedInterfaces();
-    
     std::string output = "";
-    for (const auto& interfaceName : interfaces)
+    for (const auto& interfaceName : g_sQueriedInterfaces)
     {
         if(output != "")
             output += "\n";
