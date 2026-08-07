@@ -187,7 +187,7 @@ void Application::LoadModules()
     for (auto file : files)
     {
         auto filePath = std::filesystem::path(file);
-        if (filePath.extension() == WIN_LIN("dll", "so"))
+        if (filePath.extension().string() == WIN_LIN(".dll", ".so"))
         {
             auto moduleName = NormalizeModuleName(filePath.filename().string());
             if(m_mModules.contains(moduleName))
