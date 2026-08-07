@@ -186,9 +186,10 @@ void Application::LoadModules()
     std::vector<std::string> files = FetchFileNamesFromDirectory("../../..");
     for (auto file : files)
     {
-        if (file.find(".dll") != std::string::npos && file.find(".dll.") == std::string::npos)
+        auto filePath = std::filesystem::path(file);
+        if (filePath.extension() == WIN_LIN("dll", "so"))
         {
-            auto moduleName = NormalizeModuleName(std::filesystem::path(file).filename().string());
+            auto moduleName = NormalizeModuleName(filePath.filename().string());
             if(m_mModules.contains(moduleName))
                 continue;
 
