@@ -184,22 +184,6 @@ void Application::LoadModules()
         }
         g_mAppSystems[module.m_szInterfaceName] = binaryInterface;
 
-        if(std::string(module.m_szModuleName) == "server")
-        {
-            if(m_szName == "csgo")
-            {
-                void* initFunc = nullptr;
-                s2binlib_pattern_scan("server", CS2_INIT_CODEGEN, &initFunc);
-                printf("%p\n", initFunc);
-                reinterpret_cast<void(*)(int)>(initFunc)(0);
-
-                void* getFunc = nullptr;
-                s2binlib_pattern_scan("server", CS2_GET_CODEGEN, &getFunc);
-                CNetworkSerializerCodeGenDatabase* db = reinterpret_cast<CNetworkSerializerCodeGenDatabase*(*)()>(getFunc)();
-                printf("%d\n", db->m_ClassInfos.Count());
-            }
-        }
-
         binaryInterface->Connect(&ApplicationCreateInterface);
         if (module.m_bInit)
         {
