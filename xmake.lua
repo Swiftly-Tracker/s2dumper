@@ -170,6 +170,15 @@ target("s2dumper")
             "PLATFORM_64BITS",
             "META_IS_SOURCE2",
             "_GLIBCXX_USE_CXX11_ABI=0",
+
+            "_vsnprintf=vsnprintf",
+            "_alloca=alloca",
+            "strcmpi=strcasecmp",
+            "strnicmp=strncasecmp",
+            "_snprintf=snprintf",
+            "_stricmp=strcasecmp",
+            "_strnicmp=strncasecmp",
+            "stricmp=strcasecmp",
         })
     end
 
