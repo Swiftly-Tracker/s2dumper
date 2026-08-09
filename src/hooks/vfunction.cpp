@@ -30,6 +30,13 @@ void VFunctionHook::SetHookFunction(void* instance, int index, void* callback, b
     m_oHook = safetyhook::create_inline(trampoline_addr, callback, safetyhook::InlineHook::Flags::StartDisabled);
 }
 
+void VFunctionHook::SetHookFunction(void* instance, void* callback)
+{
+    if (!instance) return;
+
+    m_oHook = safetyhook::create_inline(instance, callback, safetyhook::InlineHook::Flags::StartDisabled);
+}
+
 void VFunctionHook::Enable()
 {
     if (IsEnabled()) return;

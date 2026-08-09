@@ -124,6 +124,7 @@ void Application::Initialize(std::string outputPath, std::string game)
 {
     m_szName = game;
     s2binlib_initialize("../..", game.c_str());
+    s2binlib_dump_xrefs("server");
 
     LoadModules();
 
@@ -236,6 +237,15 @@ CSchemaSystem* Application::GetSchemaSystem()
     return schemaSystem;
 }
 
+VFunctionHook EntitySystemConstructorHook;
+CEntitySystem* g_pEntitySystem = nullptr;
+
+void* EntitySystemConstructor(void* entitySystem)
+{
+    g_pEntitySystem = reinterpret_cast<CEntitySystem*>(entitySystem);
+    return reinterpret_cast<decltype(&EntitySystemConstructor)>(EntitySystemConstructorHook.GetOriginal())(entitySystem);
+}
+
 CNetworkSerializerCodeGenDatabase* Application::GetCodeGenDatabase()
 {
     static CNetworkSerializerCodeGenDatabase* codeGenDatabase = nullptr;
@@ -259,6 +269,17 @@ CNetworkSerializerCodeGenDatabase* Application::GetCodeGenDatabase()
 
         CNetworkSerializerClassInfo* classInfo = reinterpret_cast<CNetworkSerializerClassInfo*(*)()>(((void**)CBaseEntityVTable)[0])();
         codeGenDatabase = classInfo->m_pDatabase;
+
+        void* entitySystemConstructor = nullptr;
+        s2binlib_find_func_with_string("server", "WARNING: Ignoring invalid gameinfo MaxNetworkableEntities %d\n", &entitySystemConstructor);
+
+        EntitySystemConstructorHook.SetHookFunction(entitySystemConstructor, EntitySystemConstructor);
+        EntitySystemConstructorHook.Enable();
+
+        void* serverToolsInfo = nullptr;
+        s2binlib_find_vtable("server", "CServerToolsInfo", &serverToolsInfo);
+
+        (void)reinterpret_cast<void*(*)()>(((void**)serverToolsInfo)[3])();
     }
 
     if(g_pSchemaSystem)
@@ -303,4 +324,18 @@ void Application::InitModule(std::string name, IAppSystem* system, const char* i
     }
 
     m_mInitializedModules[name] = system;
+}
+
+CEntitySystem* Application::GetEntitySystem()
+{
+    return g_pEntitySystem;
+}
+
+GameModule* Application::GetGameModule(std::string name)
+{
+    auto it = m_mModules.find(name);
+    if (it != m_mModules.end()) {
+        return it->second;
+    }
+    return nullptr;
 }

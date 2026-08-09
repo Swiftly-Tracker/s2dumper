@@ -41,6 +41,8 @@ int main(int argc, char **argv)
     DumpConVars(outputPath);
     DumpInterfaces(outputPath);
     DumpSchema(outputPath);
+    DumpEntitySystem(outputPath);
+    DumpDatamaps(outputPath);
 
     app.Shutdown();
 

@@ -28,6 +28,7 @@
 #include "module.h"
 
 #include "public/schemasystem/schemasystem.h"
+#include "public/entity2/entitysystem.h"
 #include "public/entity2/entityclass.h"
 #include "public/eiface.h"
 #include "public/tier0/interface.h"
@@ -77,6 +78,8 @@ public:
     void LoadModules();
     CSchemaSystem* GetSchemaSystem();
     CNetworkSerializerCodeGenDatabase* GetCodeGenDatabase();
+    CEntitySystem* GetEntitySystem();
+    GameModule* GetGameModule(std::string name);
 
     void* FindModuleIFace(const char* name);
     void InitModule(std::string name, IAppSystem* system, const char* interfaceName, CreateIFace factory, bool shouldInit = true);

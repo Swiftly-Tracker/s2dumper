@@ -25,6 +25,7 @@ class VFunctionHook
 {
 public:
     void SetHookFunction(void* instance, int index, void* callback, bool is_vtable);
+    void SetHookFunction(void* instance, void* callback);
 
     void Enable();
     void Disable();
