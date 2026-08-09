@@ -109,7 +109,7 @@ std::string ReadFieldType(CSchemaType* field)
     else if (field->IsA<CSchemaType_FixedArray>())
     {
         auto fixed_array = field->ReinterpretAs<CSchemaType_FixedArray>();
-        return std::format("{}[{}]", ReadFieldType(fixed_array->m_pElementType), fixed_array->m_nElementCount);
+        return ReadFieldType(fixed_array->m_pElementType) + "["+ std::to_string(fixed_array->m_nElementCount) +"]";
     }
     else if (field->IsA<CSchemaType_Atomic>())
     {

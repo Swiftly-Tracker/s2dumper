@@ -19,7 +19,6 @@
 #include "binary.h"
 #include "../dynlib/dynlib.h"
 
-#include <format>
 #include <set>
 
 Binary::Binary(std::string binary_name)

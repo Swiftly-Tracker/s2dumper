@@ -138,7 +138,7 @@ void Application::Initialize(std::string outputPath, std::string game)
     g_pCVar->Connect(tier0Factory);
     g_pCVar->Init();
 
-    SetConvarValueHook.SetHookFunction(*(void**)g_pCVar, 14, (void*)&SetConVarValue, true);
+    SetConvarValueHook.SetHookFunction(*(void**)g_pCVar, 14, (void*)SetConVarValue, true);
     SetConvarValueHook.Enable();
 
     PopulateConStuff("tier0");
@@ -273,7 +273,7 @@ CNetworkSerializerCodeGenDatabase* Application::GetCodeGenDatabase()
         void* entitySystemConstructor = nullptr;
         s2binlib_find_func_with_string("server", "WARNING: Ignoring invalid gameinfo MaxNetworkableEntities %d\n", &entitySystemConstructor);
 
-        EntitySystemConstructorHook.SetHookFunction(entitySystemConstructor, EntitySystemConstructor);
+        EntitySystemConstructorHook.SetHookFunction(entitySystemConstructor, (void*)EntitySystemConstructor);
         EntitySystemConstructorHook.Enable();
 
         void* serverToolsInfo = nullptr;

@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdint>
 
 std::vector<std::string> ParseFlags(uint64_t flags);
 void DumpCommands(std::string outputPath);

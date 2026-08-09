@@ -208,7 +208,7 @@ void CollectThinkFunctions(std::string outputPath)
     void* thinkFuncStrcmp = nullptr;
     s2binlib_find_call_with_string_arg("server", schemaBindingsExport, SCHEMASYSTEM_INTERFACE_VERSION, &thinkFuncStrcmp);
 
-    strcmpHook.SetHookFunction(thinkFuncStrcmp, thinkStrcmp);
+    strcmpHook.SetHookFunction(thinkFuncStrcmp, (void*)thinkStrcmp);
     strcmpHook.Enable();
 
     FOR_EACH_MAP_FAST(entitySystem->m_entClassesByCPPClassname, i)
