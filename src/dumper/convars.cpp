@@ -57,7 +57,11 @@ void DumpConVars(std::string outputPath)
         }
         if (ref.HasDefault()) {
             ref.GetDefaultAsString(defaultValue);
-            cvar["default"] = defaultValue.Get();
+            if(std::string(ref.GetName()) == "cl_color") {
+                cvar["default"] = minValue.Get();
+            } else {
+                cvar["default"] = defaultValue.Get();
+            }
         }
     }
 
