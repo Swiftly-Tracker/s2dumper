@@ -332,21 +332,32 @@ void CollectThinkFunctions(std::string outputPath)
 
     strcmpHook.Disable();
 
+    auto rawMappedThinkFunctions = g_MappedThinkFunctions;
+
     for (auto &[className, thinkFuncs] : g_MappedThinkFunctions)
     {
-        auto parentIt = g_EntityClassParent.find(className);
-        if (parentIt == g_EntityClassParent.end())
-            continue;
+        std::set<std::string> ancestorThinkFuncs;
+        std::set<std::string> visitedClassNames;
 
-        auto parentThinkFuncsIt = g_MappedThinkFunctions.find(parentIt->second);
-        if (parentThinkFuncsIt == g_MappedThinkFunctions.end())
-            continue;
+        std::string parentClassName = className;
+        while (true)
+        {
+            auto parentIt = g_EntityClassParent.find(parentClassName);
+            if (parentIt == g_EntityClassParent.end())
+                break;
 
-        std::set<std::string> parentThinkFuncs(parentThinkFuncsIt->second.begin(), parentThinkFuncsIt->second.end());
+            parentClassName = parentIt->second;
+            if (!visitedClassNames.insert(parentClassName).second)
+                break;
+
+            auto parentThinkFuncsIt = rawMappedThinkFunctions.find(parentClassName);
+            if (parentThinkFuncsIt != rawMappedThinkFunctions.end())
+                ancestorThinkFuncs.insert(parentThinkFuncsIt->second.begin(), parentThinkFuncsIt->second.end());
+        }
 
         std::vector<std::string> ownThinkFuncs;
         for (auto &thinkFuncName : thinkFuncs)
-            if (!parentThinkFuncs.contains(thinkFuncName))
+            if (!ancestorThinkFuncs.contains(thinkFuncName))
                 ownThinkFuncs.push_back(thinkFuncName);
 
         thinkFuncs = std::move(ownThinkFuncs);
