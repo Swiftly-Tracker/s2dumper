@@ -26,7 +26,6 @@
 extern Application app;
 
 std::set<uint64_t> g_sNetworkedFields;
-std::set<std::string> g_ProcessedSchemaClassNames;
 
 bool IsStandardLayoutClass(SchemaClassInfoData_t* classData) {
     {
@@ -157,8 +156,6 @@ void ReadClasses(CSchemaType_DeclaredClass* declClass, nlohmann::json& outJson)
     auto classInfo = declClass->m_pClassInfo;
 
     if (!classInfo) return;
-    if(g_ProcessedSchemaClassNames.contains(classInfo->m_pszName)) return;
-    g_ProcessedSchemaClassNames.insert(classInfo->m_pszName);
 
     uint32_t class_hash = hash_32_fnv1a_const(classInfo->m_pszName);
     bool isStruct = IsStandardLayoutClass(classInfo);
