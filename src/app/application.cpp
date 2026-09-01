@@ -286,6 +286,7 @@ CNetworkSerializerCodeGenDatabase* Application::GetCodeGenDatabase()
     if(g_pSchemaSystem)
     {
         InitModule("schemasystem", g_pSchemaSystem, SCHEMASYSTEM_INTERFACE_VERSION, FullFactory, true);
+		PopulateConStuff("schemasystem");
     }
 
     for(int i = 0; i < sizeof(gs_GameModules) / sizeof(gs_GameModules[0]); i++)
