@@ -263,6 +263,7 @@ CNetworkSerializerCodeGenDatabase* Application::GetCodeGenDatabase()
     if(serverIface)
     {
         InitModule("server", serverIface, SOURCE2SERVER_INTERFACE_VERSION, RawFactory, false);
+		PopulateConStuff("server");
 
         void* CBaseEntityVTable = nullptr;
         s2binlib_find_vtable("server", "CBaseEntity", &CBaseEntityVTable);
