@@ -263,7 +263,6 @@ CNetworkSerializerCodeGenDatabase* Application::GetCodeGenDatabase()
     if(serverIface)
     {
         InitModule("server", serverIface, SOURCE2SERVER_INTERFACE_VERSION, RawFactory, false);
-		PopulateConStuff("server");
 
         void* CBaseEntityVTable = nullptr;
         s2binlib_find_vtable("server", "CBaseEntity", &CBaseEntityVTable);
@@ -286,8 +285,9 @@ CNetworkSerializerCodeGenDatabase* Application::GetCodeGenDatabase()
     if(g_pSchemaSystem)
     {
         InitModule("schemasystem", g_pSchemaSystem, SCHEMASYSTEM_INTERFACE_VERSION, FullFactory, true);
-		PopulateConStuff("schemasystem");
     }
+
+    PopulateConStuff("server");
 
     for(int i = 0; i < sizeof(gs_GameModules) / sizeof(gs_GameModules[0]); i++)
     {
