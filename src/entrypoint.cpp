@@ -43,6 +43,7 @@ int main(int argc, char **argv)
     DumpSchema(outputPath);
     DumpEntitySystem(outputPath);
     DumpDatamaps(outputPath);
+    DumpPanorama(outputPath);
 
     app.Shutdown();
 

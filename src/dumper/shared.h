@@ -32,5 +32,6 @@ void DumpEntitySystem(std::string outputPath);
 void DumpDatamaps(std::string outputPath);
 void PopulateConStuff(std::string module_name);
 void InterfaceQueried(std::string interfaceName);
+void DumpPanorama(std::string outputPath);
 
 #endif
