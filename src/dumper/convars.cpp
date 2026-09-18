@@ -25,6 +25,29 @@ extern Application app;
 std::set<std::string> g_sConvarNames;
 std::map<std::string, std::string> g_sConvarModules;
 
+std::string ConVarTypeToString(EConVarType cvarType)
+{
+    if(cvarType == EConVarType_Invalid) return "invalid";
+    else if(cvarType == EConVarType_Bool) return "bool";
+	else if(cvarType == EConVarType_Int16) return "int16";
+	else if(cvarType == EConVarType_UInt16) return "uint16";
+	else if(cvarType == EConVarType_Int32) return "int32";
+	else if(cvarType == EConVarType_UInt32) return "uint32";
+	else if(cvarType == EConVarType_Int64) return "int64";
+	else if(cvarType == EConVarType_UInt64) return "uint64";
+	else if(cvarType == EConVarType_Float32) return "float32";
+	else if(cvarType == EConVarType_Float64) return "float64";
+    else if(cvarType == EConVarType_String) return "string";
+    else if(cvarType == EConVarType_Color) return "color";
+    else if(cvarType == EConVarType_Vector2) return "vector2";
+    else if(cvarType == EConVarType_Vector3) return "vector3";
+    else if(cvarType == EConVarType_Vector4) return "vector4";
+    else if(cvarType == EConVarType_Qangle) return "qangle";
+    else if(cvarType == EConVarType_VectorWS) return "vectorws";
+    else if(cvarType == EConVarType_MAX) return "max";
+    else return "unknown";
+}
+
 void DumpConVars(std::string outputPath)
 {
     nlohmann::json convars;
@@ -42,6 +65,8 @@ void DumpConVars(std::string outputPath)
                 {"has_default", ref.HasDefault()},
             }},
             {"module", g_sConvarModules[ref.GetName()]},
+            {"datatype", ConVarTypeToString(ref.GetType())},
+            {"datatype_raw", (int)ref.GetType()},
         });
 
         auto& cvar = convars.back();

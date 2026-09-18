@@ -363,7 +363,7 @@ void CollectThinkFunctions(std::string outputPath)
         thinkFuncs = std::move(ownThinkFuncs);
     }
 
-    printf("Dumped %d think functions.\n", g_ThinkFunctionNames.size());
+    printf("Dumped %zu think functions.\n", g_ThinkFunctionNames.size());
 
     std::string output = "";
     for (const auto &functionName : g_ThinkFunctionNames)
