@@ -22,9 +22,6 @@
  #include <public/icvar.h>
  #include <set>
 
-#define FCVAR_MISSING1	(1ull<<30)
-#define FCVAR_MISSING2	(1ull<<31)
-
 extern std::set<std::string> g_sConvarNames;
 extern std::map<std::string, std::string> g_sConvarModules;
 extern std::set<std::string> g_sCommandNames;
@@ -61,8 +58,8 @@ std::map<uint64_t, std::string> g_mFlags = {
 	{FCVAR_VCONSOLE_SET_FOCUS, "vconsole_set_focus"},
 	{FCVAR_CLIENTCMD_CAN_EXECUTE, "clientcmd_can_execute"},
 	{FCVAR_EXECUTE_PER_TICK, "execute_per_tick"},
-	{FCVAR_MISSING1, "missing1"},
-	{FCVAR_MISSING2, "missing2"},
+	{FCVAR_SNAPSHOT_IGNORED, "snapshot_ignored"},
+	{FCVAR_GAMEINFO_CANNOT_OVERRIDE, "gameinfo_cannot_override"},
 	{FCVAR_DEFENSIVE, "defensive"}
 };
 
