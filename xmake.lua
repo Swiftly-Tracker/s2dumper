@@ -17,7 +17,7 @@ target("s2dumper")
         "src/**/*.cpp",
 
         sdk_path.."/public/tier1/convar.cpp",
-        sdk_path.."/public/tier0/memoverride.cpp",
+        -- sdk_path.."/public/tier0/memoverride.cpp",
 
         "vendor/safetyhook/safetyhook.cpp",
         "vendor/safetyhook/Zydis.c",
