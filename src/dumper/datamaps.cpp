@@ -24,286 +24,115 @@
 #include <s2binlib/s2binlib.h>
 
 extern Application app;
+extern std::map<fieldtype_t, std::string> g_mFieldTypes;
 
 std::set<std::string> g_ThinkFunctionNames;
 std::set<std::string> g_ProcessedClassNames;
-std::map<std::string, std::vector<std::string>> g_MappedThinkFunctions;
-std::map<std::string, std::string> g_EntityClassParent;
 
-std::string GetDatamapFieldTypeName(fieldtype_t type)
+struct MemberData
 {
-    switch (type)
-    {
-    case FIELD_VOID:
-        return "void";
-    case FIELD_FLOAT32:
-        return "float";
-    case FIELD_STRING:
-        return "string";
-    case FIELD_VECTOR:
-        return "vector";
-    case FIELD_QUATERNION:
-        return "quaternion";
-    case FIELD_INT32:
-        return "int";
-    case FIELD_BOOLEAN:
-        return "boolean";
-    case FIELD_INT16:
-        return "int";
-    case FIELD_CHARACTER:
-        return "char";
-    case FIELD_COLOR32:
-        return "color32";
-    case FIELD_EMBEDDED:
-        return "embedded";
-    case FIELD_CUSTOM:
-        return "custom";
-    case FIELD_CLASSPTR:
-        return "classptr";
-    case FIELD_EHANDLE:
-        return "ehandle";
-    case FIELD_POSITION_VECTOR:
-        return "position_vector";
-    case FIELD_TIME:
-        return "time";
-    case FIELD_TICK:
-        return "tick";
-    case FIELD_SOUNDNAME:
-        return "soundname";
-    case FIELD_INPUT:
-        return "input";
-    case FIELD_FUNCTION:
-        return "function";
-    case FIELD_VMATRIX:
-        return "vmatrix";
-    case FIELD_VMATRIX_WORLDSPACE:
-        return "vmatrix_worldspace";
-    case FIELD_MATRIX3X4_WORLDSPACE:
-        return "matrix3x4_worldspace";
-    case FIELD_INTERVAL:
-        return "interval";
-    case FIELD_UNUSED:
-        return "unused";
-    case FIELD_VECTOR2D:
-        return "vector2d";
-    case FIELD_INT64:
-        return "int";
-    case FIELD_VECTOR4D:
-        return "vector4d";
-    case FIELD_RESOURCE:
-        return "resource";
-    case FIELD_TYPEUNKNOWN:
-        return "typeunknown";
-    case FIELD_CSTRING:
-        return "cstring";
-    case FIELD_HSCRIPT:
-        return "hscript";
-    case FIELD_VARIANT:
-        return "variant";
-    case FIELD_UINT64:
-        return "uint64";
-    case FIELD_FLOAT64:
-        return "float64";
-    case FIELD_POSITIVEINTEGER_OR_NULL:
-        return "positiveinteger_or_null";
-    case FIELD_HSCRIPT_NEW_INSTANCE:
-        return "hscript_new_instance";
-    case FIELD_UINT32:
-        return "uint32";
-    case FIELD_UTLSTRINGTOKEN:
-        return "utlstringtoken";
-    case FIELD_QANGLE:
-        return "qangle";
-    case FIELD_NETWORK_ORIGIN_CELL_QUANTIZED_VECTOR:
-        return "network_origin_cell_quantized_vector";
-    case FIELD_HMATERIAL:
-        return "hmaterial";
-    case FIELD_HMODEL:
-        return "hmodel";
-    case FIELD_NETWORK_QUANTIZED_VECTOR:
-        return "network_quantized_vector";
-    case FIELD_NETWORK_QUANTIZED_FLOAT:
-        return "network_quantized_float";
-    case FIELD_DIRECTION_VECTOR_WORLDSPACE:
-        return "direction_vector_worldspace";
-    case FIELD_QANGLE_WORLDSPACE:
-        return "qangle_worldspace";
-    case FIELD_QUATERNION_WORLDSPACE:
-        return "quaternion_worldspace";
-    case FIELD_HSCRIPT_LIGHTBINDING:
-        return "hscript_lightbinding";
-    case FIELD_V8_VALUE:
-        return "v8_value";
-    case FIELD_V8_OBJECT:
-        return "v8_object";
-    case FIELD_V8_ARRAY:
-        return "v8_array";
-    case FIELD_V8_CALLBACK_INFO:
-        return "v8_callback_info";
-    case FIELD_UTLSTRING:
-        return "utlstring";
-    case FIELD_NETWORK_ORIGIN_CELL_QUANTIZED_POSITION_VECTOR:
-        return "network_origin_cell_quantized_position_vector";
-    case FIELD_HRENDERTEXTURE:
-        return "hrendertexture";
-    case FIELD_HPARTICLESYSTEMDEFINITION:
-        return "hparticlesystemdefinition";
-    case FIELD_UINT8:
-        return "uint8";
-    case FIELD_UINT16:
-        return "uint16";
-    case FIELD_CTRANSFORM:
-        return "ctransform";
-    case FIELD_CTRANSFORM_WORLDSPACE:
-        return "ctransform_worldspace";
-    case FIELD_HPOSTPROCESSING:
-        return "hpostprocessing";
-    case FIELD_MATRIX3X4:
-        return "matrix3x4";
-    case FIELD_SHIM:
-        return "shim";
-    case FIELD_CMOTIONTRANSFORM:
-        return "cmotiontransform";
-    case FIELD_CMOTIONTRANSFORM_WORLDSPACE:
-        return "cmotiontransform_worldspace";
-    case FIELD_ATTACHMENT_HANDLE:
-        return "attachment_handle";
-    case FIELD_AMMO_INDEX:
-        return "ammo_index";
-    case FIELD_CONDITION_ID:
-        return "condition_id";
-    case FIELD_AI_SCHEDULE_BITS:
-        return "ai_schedule_bits";
-    case FIELD_MODIFIER_HANDLE:
-        return "modifier_handle";
-    case FIELD_ROTATION_VECTOR:
-        return "rotation_vector";
-    case FIELD_ROTATION_VECTOR_WORLDSPACE:
-        return "rotation_vector_worldspace";
-    case FIELD_HVDATA:
-        return "hvdata";
-    case FIELD_SCALE32:
-        return "scale32";
-    case FIELD_STRING_AND_TOKEN:
-        return "string_and_token";
-    case FIELD_ENGINE_TIME:
-        return "engine_time";
-    case FIELD_ENGINE_TICK:
-        return "engine_tick";
-    case FIELD_WORLD_GROUP_ID:
-        return "world_group_id";
-    case FIELD_GLOBALSYMBOL:
-        return "globalsymbol";
-    case FIELD_HNMGRAPHDEFINITION:
-        return "hnmgraphdefinition";
-    case FIELD_TYPECOUNT:
-        return "typecount";
-    }
+    std::string type;
+    std::string name;
+    std::string schemaName;
+};
 
-    return "unknown";
-}
-
-void CollectDatamapFields(datamap_t *map, nlohmann::json &fields, int &fieldsCount)
+struct InputData
 {
-    if (!map)
-        return;
+    std::string name;
+    std::string raw_name;
+    std::string description;
+    std::string return_type;
+    int variant_count;
+    int parameter_count;
+    std::vector<std::string> parameter_types;
+    std::string parameter_names;
+};
 
-    if (!map->dataDesc || map->dataNumFields <= 0)
-        return;
+struct OutputData
+{
+    std::string name;
+    std::string schema_name;
+};
 
-    fieldsCount += map->dataNumFields;
+struct EntityClassMetadata
+{
+    CEntityClass* entityClass;
+    ScriptClassDesc_t* scriptDesc;
+    std::string entityParent;
 
-    for (int i = 0; i < map->dataNumFields; i++)
+    std::set<std::string> thinkFunctions;
+    std::vector<MemberData> members;
+    std::vector<InputData> inputs;
+    std::vector<OutputData> outputs;
+};
+
+std::map<std::string, EntityClassMetadata> g_EntityClassMetadata;
+
+void EnsureEntityClassMetadata(std::string className, CEntityClass* entityClass, ScriptClassDesc_t* scriptDesc, std::string entityParent)
+{
+    if(!g_EntityClassMetadata.contains(className))
     {
-        auto &desc = map->dataDesc[i];
-
-        std::string fieldName = desc.fieldName ? desc.fieldName : "";
-        std::string externalName = (desc.externalName && desc.externalName[0]) ? desc.externalName : "";
-
-        bool isInput = (desc.flags & FTYPEDESC_WAS_INPUT) != 0 || (desc.flags & FTYPEDESC_INPUT) != 0;
-        bool isOutput = (desc.flags & FTYPEDESC_WAS_OUTPUT) != 0 || (desc.flags & FTYPEDESC_OUTPUT) != 0;
-
-        if (!isInput && !isOutput && (fieldName == "" || externalName == ""))
-            continue;
-
-        nlohmann::json fieldJson = {
-            {"fieldType", GetDatamapFieldTypeName(desc.fieldType)},
-            {"fieldName", fieldName},
-            {"externalName", externalName},
-        };
-
-        if (isInput)
-        {
-            auto &inputs = fields["inputs"];
-            inputs.push_back(fieldJson);
-        }
-        else if (isOutput)
-        {
-            auto &outputs = fields["outputs"];
-            outputs.push_back(fieldJson);
-        }
-        else
-        {
-            auto &members = fields["members"];
-            members.push_back(fieldJson);
-        }
+        g_EntityClassMetadata[className] = EntityClassMetadata{entityClass, scriptDesc, entityParent};
     }
 }
 
-void ReadClassDatamap(CSchemaType_DeclaredClass *declClass, nlohmann::json &outJson, int &fieldsCount)
+void PopulateEntityMetadataScriptDesc(ScriptClassDesc_t* scriptDesc)
 {
-    auto classInfo = declClass->m_pClassInfo;
-    if (!classInfo)
-        return;
+    if(scriptDesc == nullptr) return;
 
-    if (g_ProcessedClassNames.contains(classInfo->m_pszName))
-        return;
-    g_ProcessedClassNames.insert(classInfo->m_pszName);
+    EnsureEntityClassMetadata(scriptDesc->m_pszClassname, nullptr, scriptDesc, "");
+    if(scriptDesc->m_pBaseDesc)
+        PopulateEntityMetadataScriptDesc(scriptDesc->m_pBaseDesc);
+}
 
-    auto map = classInfo->m_pDataDescMap;
-    if (!map)
-        return;
+void CollectClassData()
+{
+    CEntitySystem *entitySystem = (CEntitySystem *)app.GetEntitySystem();
+    
+    FOR_EACH_MAP_FAST(entitySystem->m_entClassesByCPPClassname, i)
+    {
+        auto entityClass = entitySystem->m_entClassesByCPPClassname[i];
+        auto dumpingClass = entitySystem->m_entClassesByCPPClassname.Key(i);
 
-    auto &datamaps = outJson["datamaps"];
+        std::string parentClassName = "";
+        if(entityClass->m_pBaseClassInfo && entityClass->m_pBaseClassInfo->m_pszCPPClassname)   
+            parentClassName = entityClass->m_pBaseClassInfo->m_pszCPPClassname;
 
-    nlohmann::json fields = nlohmann::json::object();
-    CollectDatamapFields(map, fields, fieldsCount);
+        EnsureEntityClassMetadata(dumpingClass, entityClass, entityClass->m_pScriptDesc, parentClassName);
+    }
 
-    std::vector<std::string> thinkfunctions;
-    auto mappedThinkFuncsIt = g_MappedThinkFunctions.find(classInfo->m_pszName);
-    if (mappedThinkFuncsIt != g_MappedThinkFunctions.end())
-        thinkfunctions = mappedThinkFuncsIt->second;
+    for(auto& [className, metadata] : g_EntityClassMetadata)
+    {
+        auto scriptDesc = metadata.scriptDesc;
+        if(!scriptDesc) continue;
 
-    datamaps.push_back({
-        {"class_name", classInfo->m_pszName},
-        {"data_class_name", map->dataClassName ? map->dataClassName : classInfo->m_pszName},
-        {"fields", fields},
-        {"think_functions", thinkfunctions},
-    });
+        PopulateEntityMetadataScriptDesc(scriptDesc);
+    }
 }
 
 VFunctionHook strcmpHook;
-std::string current_dumping_class;
+EntityClassMetadata* current_dumping_class = nullptr;
 
 int64_t thinkStrcmp(char *a1, char *a2)
 {
     if (!strcmp(a1, "s2dumper"))
     {
         g_ThinkFunctionNames.insert(a2);
-        g_MappedThinkFunctions[current_dumping_class].push_back(a2);
+        current_dumping_class->thinkFunctions.insert(a2);
     }
     else if (!strcmp(a2, "s2dumper"))
     {
         g_ThinkFunctionNames.insert(a1);
-        g_MappedThinkFunctions[current_dumping_class].push_back(a1);
+        current_dumping_class->thinkFunctions.insert(a1);
     }
 
     return reinterpret_cast<decltype(&thinkStrcmp)>(strcmpHook.GetOriginal())(a1, a2);
 }
 
-void CollectThinkFunctions(std::string outputPath)
+void* RawFactory(const char* name, int* returnCode);
+
+void CollectClassThinkFunctions()
 {
-    CEntitySystem *entitySystem = (CEntitySystem *)app.GetEntitySystem();
     auto module = app.GetGameModule("server");
 
     void *schemaBindingsExport = module->m_pBinary->GetExport("InstallSchemaBindings");
@@ -314,27 +143,19 @@ void CollectThinkFunctions(std::string outputPath)
     strcmpHook.SetHookFunction(thinkFuncStrcmp, (void *)thinkStrcmp);
     strcmpHook.Enable();
 
-    FOR_EACH_MAP_FAST(entitySystem->m_entClassesByCPPClassname, i)
+    for (auto& [className, metadata] : g_EntityClassMetadata)
     {
-        auto entityClass = entitySystem->m_entClassesByCPPClassname[i];
-        if (entityClass->m_NameToThinkFunc == 0)
-            continue;
+        current_dumping_class = &metadata;
 
-        current_dumping_class = entitySystem->m_entClassesByCPPClassname.Key(i);
-        if (!g_MappedThinkFunctions.contains(current_dumping_class))
-            g_MappedThinkFunctions.insert({current_dumping_class, {}});
-
-        if (entityClass->m_pBaseClassInfo && entityClass->m_pBaseClassInfo->m_pszCPPClassname)
-            g_EntityClassParent[current_dumping_class] = entityClass->m_pBaseClassInfo->m_pszCPPClassname;
-
-        (void)entityClass->m_NameToThinkFunc("s2dumper");
+        if (metadata.entityClass->m_NameToThinkFunc != 0)
+            (void)metadata.entityClass->m_NameToThinkFunc("s2dumper");
     }
 
     strcmpHook.Disable();
 
-    auto rawMappedThinkFunctions = g_MappedThinkFunctions;
+    auto rawThinkFunctions = g_EntityClassMetadata;
 
-    for (auto &[className, thinkFuncs] : g_MappedThinkFunctions)
+    for (auto &[className, metadata] : g_EntityClassMetadata)
     {
         std::set<std::string> ancestorThinkFuncs;
         std::set<std::string> visitedClassNames;
@@ -342,28 +163,164 @@ void CollectThinkFunctions(std::string outputPath)
         std::string parentClassName = className;
         while (true)
         {
-            auto parentIt = g_EntityClassParent.find(parentClassName);
-            if (parentIt == g_EntityClassParent.end())
+            auto parentIt = g_EntityClassMetadata.find(parentClassName);
+            if (parentIt == g_EntityClassMetadata.end())
                 break;
 
-            parentClassName = parentIt->second;
+            parentClassName = parentIt->second.entityParent;
             if (!visitedClassNames.insert(parentClassName).second)
                 break;
 
-            auto parentThinkFuncsIt = rawMappedThinkFunctions.find(parentClassName);
-            if (parentThinkFuncsIt != rawMappedThinkFunctions.end())
-                ancestorThinkFuncs.insert(parentThinkFuncsIt->second.begin(), parentThinkFuncsIt->second.end());
+            auto parentThinkFuncsIt = rawThinkFunctions.find(parentClassName);
+            if (parentThinkFuncsIt != rawThinkFunctions.end())
+                ancestorThinkFuncs.insert(parentThinkFuncsIt->second.thinkFunctions.begin(), parentThinkFuncsIt->second.thinkFunctions.end());
         }
 
-        std::vector<std::string> ownThinkFuncs;
-        for (auto &thinkFuncName : thinkFuncs)
+        std::set<std::string> ownThinkFuncs;
+        for (auto &thinkFuncName : metadata.thinkFunctions)
             if (!ancestorThinkFuncs.contains(thinkFuncName))
-                ownThinkFuncs.push_back(thinkFuncName);
+                ownThinkFuncs.insert(thinkFuncName);
 
-        thinkFuncs = std::move(ownThinkFuncs);
+        metadata.thinkFunctions = std::move(ownThinkFuncs);
     }
 
     printf("Dumped %zu think functions.\n", g_ThinkFunctionNames.size());
+}
+
+void CollectClassInputFunctions()
+{
+    for(auto& [className, metadata] : g_EntityClassMetadata)
+    {
+        auto scriptDesc = metadata.scriptDesc;
+        if(!scriptDesc) return;
+
+        auto& bindings = scriptDesc->m_FunctionBindings;
+        FOR_EACH_VEC(bindings, i)
+        {
+            auto& binding = bindings[i];
+
+            InputData data;
+            data.name = binding.m_desc.m_pszScriptName;
+            data.raw_name = binding.m_desc.m_pszFunction;
+            data.description = binding.m_desc.m_pszDescription;
+            data.return_type = g_mFieldTypes[binding.m_desc.m_ReturnType];
+            data.variant_count = binding.m_desc.m_iVariantCount;
+            data.parameter_count = binding.m_desc.m_iParamCount;
+            data.parameter_names = binding.m_desc.m_pszParameterNames ? binding.m_desc.m_pszParameterNames : "";
+            for(int i = 0; i < binding.m_desc.m_iParamCount; i++)
+                data.parameter_types.push_back(g_mFieldTypes[binding.m_desc.m_Parameters[i]]);
+
+            metadata.inputs.push_back(data);
+        }
+    }
+}
+
+std::string ReadFieldType(CSchemaType* field);
+
+void CollectClassMembers(CSchemaType_DeclaredClass* declaredClass)
+{
+    auto classInfo = declaredClass->m_pClassInfo;
+    if(classInfo == nullptr) return;
+
+    std::string className = classInfo->m_pszCPPName;
+    if(g_ProcessedClassNames.contains(className)) return;
+    g_ProcessedClassNames.insert(className);
+
+    EnsureEntityClassMetadata(
+        className, nullptr, nullptr, 
+        classInfo->m_pBaseClasses ? classInfo->m_pBaseClasses->m_pClass->m_pszCPPName : ""
+    );
+
+    auto& metadata = g_EntityClassMetadata[className];
+
+    auto dataMap = classInfo->m_pDataDescMap;
+    if (!dataMap)
+        return;
+
+    {
+        if (!dataMap)
+           return;
+
+        if (!dataMap->dataDesc || dataMap->dataNumFields <= 0)
+            return;
+
+        for (int i = 0; i < dataMap->dataNumFields; i++)
+        {
+            auto &desc = dataMap->dataDesc[i];
+
+            std::string fieldName = desc.fieldName ? desc.fieldName : "";
+            std::string externalName = (desc.externalName && desc.externalName[0]) ? desc.externalName : "";
+
+            MemberData memberData;
+            memberData.type = g_mFieldTypes[desc.fieldType];
+            memberData.name = externalName;
+            memberData.schemaName = fieldName;
+
+            metadata.members.push_back(memberData);
+        }
+    }
+
+    {
+        auto field_size = classInfo->m_nFieldCount;
+        auto fields = classInfo->m_pFields;
+
+        for (int i = 0; i < field_size; i++)
+        {
+            auto fieldType = ReadFieldType(fields[i].m_pType);
+            if(fieldType == "CEntityIOOutput")
+            {
+                OutputData outputData;
+                outputData.schema_name = fields[i].m_pszName;
+                outputData.name = outputData.schema_name.substr(2);
+                metadata.outputs.push_back(outputData);
+            }
+        }
+    }
+}
+
+void CollectClassesMembers()
+{
+    CSchemaSystem *schemaSystem = (CSchemaSystem *)app.GetSchemaSystem();
+
+    auto globalTypeScope = schemaSystem->GlobalTypeScope();
+
+    FOR_EACH_MAP(globalTypeScope->m_DeclaredClasses.m_Map, iter)
+    {
+        CollectClassMembers(globalTypeScope->m_DeclaredClasses.m_Map.Element(iter));
+    }
+
+    for (int i = 0; i < schemaSystem->m_TypeScopes.GetNumStrings(); i++)
+    {
+        auto ts = schemaSystem->m_TypeScopes[i];
+
+        FOR_EACH_MAP(ts->m_DeclaredClasses.m_Map, iter)
+        {
+            CollectClassMembers(ts->m_DeclaredClasses.m_Map.Element(iter));
+        }
+    }
+}
+
+void DumpDatamaps(std::string outputPath)
+{
+    CollectClassData();
+    CollectClassThinkFunctions();
+    CollectClassInputFunctions();
+    CollectClassesMembers();
+
+    int membersCount = 0;
+    int outputsCount = 0;
+    int inputsCount = 0;
+    int thinkFunctionsCount = g_ThinkFunctionNames.size();
+    int classesCount = g_EntityClassMetadata.size();
+
+    for(auto& [className, metadata] : g_EntityClassMetadata)
+    {
+        membersCount += metadata.members.size();
+        outputsCount += metadata.outputs.size();
+        inputsCount += metadata.inputs.size();
+    }
+
+    printf("Dumped %d members, %d outputs, %d inputs, %d think functions across %d classes.\n", membersCount, outputsCount, inputsCount, thinkFunctionsCount, classesCount);
 
     std::string output = "";
     for (const auto &functionName : g_ThinkFunctionNames)
@@ -380,36 +337,60 @@ void CollectThinkFunctions(std::string outputPath)
         fprintf(f, "%s", output.c_str());
         fclose(f);
     }
-}
 
-void DumpDatamaps(std::string outputPath)
-{
-    CollectThinkFunctions(outputPath);
+    nlohmann::json datamapJson = nlohmann::json::array();
 
-    CSchemaSystem *schemaSystem = (CSchemaSystem *)app.GetSchemaSystem();
-
-    nlohmann::json datamapsJson;
-    int fieldsCount = 0;
-
-    auto globalTypeScope = schemaSystem->GlobalTypeScope();
-
-    int classes_count = globalTypeScope->m_DeclaredClasses.m_Map.Count();
-    FOR_EACH_MAP(globalTypeScope->m_DeclaredClasses.m_Map, iter)
+    for(auto& [className, metadata] : g_EntityClassMetadata)
     {
-        ReadClassDatamap(globalTypeScope->m_DeclaredClasses.m_Map.Element(iter), datamapsJson, fieldsCount);
-    }
+        nlohmann::json classJson;
+        classJson["class_name"] = className;
 
-    for (int i = 0; i < schemaSystem->m_TypeScopes.GetNumStrings(); i++)
-    {
-        auto ts = schemaSystem->m_TypeScopes[i];
-
-        FOR_EACH_MAP(ts->m_DeclaredClasses.m_Map, iter)
+        nlohmann::json membersJson = nlohmann::json::array();
+        for(auto& member : metadata.members)
         {
-            ReadClassDatamap(ts->m_DeclaredClasses.m_Map.Element(iter), datamapsJson, fieldsCount);
+            nlohmann::json memberJson;
+            memberJson["type"] = member.type;
+            memberJson["name"] = member.name;
+            memberJson["schema_name"] = member.schemaName;
+            membersJson.push_back(memberJson);
         }
+        classJson["members"] = membersJson;
+
+        nlohmann::json inputsJson = nlohmann::json::array();
+        for(auto& input : metadata.inputs)
+        {
+            nlohmann::json inputJson;
+            inputJson["name"] = input.name;
+            inputJson["raw_name"] = input.raw_name;
+            inputJson["description"] = input.description;
+            inputJson["return_type"] = input.return_type;
+            inputJson["variant_count"] = input.variant_count;
+            inputJson["parameter_count"] = input.parameter_count;
+            inputJson["parameter_types"] = input.parameter_types;
+            inputJson["parameter_names"] = input.parameter_names;
+            inputsJson.push_back(inputJson);
+        }
+        classJson["inputs"] = inputsJson;
+
+        nlohmann::json outputsJson = nlohmann::json::array();
+        for(auto& output : metadata.outputs)
+        {
+            nlohmann::json outputJson;
+            outputJson["name"] = output.name;
+            outputJson["schema_name"] = output.schema_name;
+            outputsJson.push_back(outputJson);
+        }
+        classJson["outputs"] = outputsJson;
+
+        nlohmann::json thinkFunctionsJson = nlohmann::json::array();
+        for(auto& thinkFunction : metadata.thinkFunctions)
+        {
+            thinkFunctionsJson.push_back(thinkFunction);
+        }
+        classJson["think_functions"] = thinkFunctionsJson;
+
+        datamapJson.push_back(classJson);
     }
 
-    printf("Dumped %d datamaps with a total of %d fields\n", classes_count, fieldsCount);
-
-    WriteJSON(outputPath + "/datamaps.json", datamapsJson);
+    WriteJSON(outputPath + "/datamaps.json", datamapJson);
 }
