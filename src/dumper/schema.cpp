@@ -38,6 +38,9 @@ struct NetworkData
     int bitCount;
     float min;
     float max;
+    int priority;
+    std::vector<std::string> includeByUserGroup;
+    int encodeFlags;
 };
 
 std::map<uint64_t, NetworkData> g_NetworkedFields;
@@ -416,6 +419,12 @@ void CollectNetworkedFields()
             network.bitCount = fieldInfo->m_NetworkBitCount;
             network.min = fieldInfo->m_NetworkMin;
             network.max = fieldInfo->m_NetworkMax;
+            network.priority = fieldInfo->m_NetworkPriority;
+            FOR_EACH_VEC(fieldInfo->m_NetworkIncludeByUserGroup, k)
+            {
+                network.includeByUserGroup.push_back(SafeString(fieldInfo->m_NetworkIncludeByUserGroup[k].Get()));
+            }
+            network.encodeFlags = fieldInfo->m_NetworkEncodeFlags;
 
             g_NetworkedFields[fieldHash] = std::move(network);
         }
@@ -513,6 +522,9 @@ void DumpSchema(std::string outputPath)
                     {"bit_count", network.bitCount},
                     {"min", network.min},
                     {"max", network.max},
+                    {"priority", network.priority},
+                    {"include_by_user_group", network.includeByUserGroup},
+                    {"encode_flags", network.encodeFlags},
                 };
             }
 
