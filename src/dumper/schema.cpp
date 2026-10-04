@@ -391,8 +391,6 @@ void CollectNetworkedFields()
 {
     auto codegenDatabase = app.GetCodeGenDatabase();
 
-    printf("%p\n", codegenDatabase);
-
     FOR_EACH_DICT_FAST(codegenDatabase->m_ClassInfos, i)
     {
         auto className = codegenDatabase->m_ClassInfos.GetElementName(i);
