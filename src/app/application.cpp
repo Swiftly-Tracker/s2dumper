@@ -52,7 +52,7 @@ static const InitGameModule gs_GameModules[28] = {
     {"animationsystem", ANIMATIONSYSTEM_INTERFACE_VERSION},
     {"materialsystem2", TEXTLAYOUT_INTERFACE_VERSION},
     {"meshsystem", MESHSYSTEM_INTERFACE_VERSION, false},
-    {"networksystem", NETWORKSYSTEM_INTERFACE_VERSION, false},
+    {"networksystem", NETWORKSYSTEM_INTERFACE_VERSION},
     {"panorama", PANORAMAUIENGINE_INTERFACE_VERSION},
     {"particles", PARTICLESYSTEMMGR_INTERFACE_VERSION, false},
     {"pulse_system", PULSESYSTEM_INTERFACE_VERSION},
